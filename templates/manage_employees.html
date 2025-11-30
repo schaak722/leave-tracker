@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-3">Manage Employees</h2>
+
+<p>
+  <a href="{{ url_for('add_employee') }}" class="btn btn-sm btn-outline-success">
+    Add / Update Leave Days
+  </a>
+</p>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-sm table-bordered mb-0 summary-table">
+      <thead class="table-light">
+        <tr>
+          <th>Name</th>
+          <th>Date of Birth</th>
+          <th>Active</th>
+          <th>Leave Days</th>
+          <th style="width: 180px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for emp in employees %}
+        <tr>
+          <td>{{ emp.name }}</td>
+          <td>
+            {% if emp.birthday %}
+              {{ emp.birthday.strftime('%d/%m/%Y') }}
+            {% else %}
+              <em>-</em>
+            {% endif %}
+          </td>
+          <td>{{ "Yes" if emp.active else "No" }}</td>
+          <td>
+            {% if emp.entitlements %}
+              <div class="leave-days-list">
+                {% for ent in emp.entitlements|sort(attribute="year") %}
+                  <span class="leave-chip">
+                    <span class="leave-chip-year">{{ ent.year }}</span>
+                    <span class="leave-chip-days">{{ "%.1f"|format(ent.days) }}d</span>
+                  </span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <em>None</em>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('edit_employee', employee_id=emp.id) }}"
+               class="btn btn-sm btn-outline-primary mb-1">Edit</a>
+            <form method="post"
+                  action="{{ url_for('delete_employee', employee_id=emp.id) }}"
+                  style="display:inline;"
+                  onsubmit="return confirm('Delete this employee and all their leave records?');">
+              <button type="submit" class="btn btn-sm btn-outline-danger mb-1">Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm mt-3">
+  Back to calendar
+</a>
+{% endblock %}

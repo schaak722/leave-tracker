@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3>Leave summary – {{ employee.name }} – {{ year }}</h3>
+
+<div class="mb-3">
+  <table class="table table-sm table-bordered w-auto">
+    <tbody>
+      <tr>
+        <th>Entitlement</th>
+        <td>{{ "%.1f"|format(entitlement) }}</td>
+      </tr>
+      <tr>
+        <th>Taken</th>
+        <td>{{ "%.1f"|format(taken) }}</td>
+      </tr>
+      <tr>
+        <th>Remaining</th>
+        <td>{{ "%.1f"|format(remaining) }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h5>Leave days</h5>
+{% if entries %}
+  <table class="table table-sm table-bordered w-auto">
+    <thead class="table-light">
+      <tr>
+        <th>Date</th>
+        <th>Code</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for e in entries %}
+      <tr>
+        <td>{{ e.date.strftime("%Y-%m-%d") }}</td>
+        <td>{{ e.code }}</td>
+        <td>{{ "%.1f"|format(e.value) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>No leave entries recorded for this year.</p>
+{% endif %}
+
+<a href="{{ url_for('calendar_view', year=year) }}" class="btn btn-outline-primary btn-sm mt-3">
+  Back to calendar
+</a>
+
+{% endblock %}

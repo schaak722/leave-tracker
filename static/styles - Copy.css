@@ -1,0 +1,467 @@
+/* ===========================
+   Global / Base
+   =========================== */
+
+:root {
+  --bg-main: #ffffff;
+  --bg-card: #ffffff;
+  --border-subtle: #e5e7eb;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --accent: #007aff;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-main);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.app-wrapper {
+  max-width: 1200px;
+  margin: 24px auto 40px;
+}
+
+
+/* ===========================
+   Top Navigation
+   =========================== */
+
+.app-nav {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  padding: 8px 16px;
+}
+
+.app-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-badge {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+
+/* ===========================
+   Typography
+   =========================== */
+
+h2, h3, h5 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+}
+
+h2 {
+  font-size: 1.3rem;
+}
+
+h5 {
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+
+/* ===========================
+   Buttons
+   =========================== */
+
+.btn,
+button,
+input[type="submit"] {
+  border-radius: 999px !important;
+  font-weight: 500 !important;
+  font-size: 0.8rem !important;
+  padding: 4px 12px !important;
+}
+
+.btn-primary,
+.btn-outline-primary {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  background-color: transparent !important;
+}
+
+.btn-primary:hover,
+.btn-outline-primary:hover {
+  background-color: rgba(0, 122, 255, 0.06) !important;
+  color: var(--accent) !important;
+}
+
+.btn-outline-danger {
+  border-color: #ff3b30 !important;
+  color: #ff3b30 !important;
+}
+
+.btn-outline-danger:hover {
+  background-color: rgba(255, 59, 48, 0.06) !important;
+}
+
+
+/* ===========================
+   Cards & Tables (generic)
+   =========================== */
+
+.card {
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  background: #ffffff;
+}
+
+.table {
+  margin-bottom: 0;
+  border-color: var(--border-subtle);
+}
+
+.table > :not(caption) > * > * {
+  border-color: var(--border-subtle);
+}
+
+.table-sm th,
+.table-sm td {
+  padding: 4px 8px;
+}
+
+/* Summary table */
+.summary-table {
+  background: #ffffff;
+}
+
+.summary-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+/* Summary alignment */
+.summary-table th,
+.summary-table td {
+  vertical-align: middle;
+}
+
+/* Employee column left-aligned */
+.summary-table th:first-child,
+.summary-table td:first-child {
+  text-align: left;
+}
+
+/* Entitlement / Taken / Remaining centered */
+.summary-table th:nth-child(2),
+.summary-table th:nth-child(3),
+.summary-table th:nth-child(4),
+.summary-table td:nth-child(2),
+.summary-table td:nth-child(3),
+.summary-table td:nth-child(4) {
+  text-align: center;
+}
+
+
+/* ===========================
+   Month Blocks / Calendar
+   =========================== */
+
+.month-block {
+  margin-bottom: 24px;
+}
+
+.month-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  color: #374151;
+}
+
+/* Calendar table container */
+.leave-table {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+/* Calendar head */
+.leave-table thead.table-light {
+  background: #f9fafb;
+}
+
+/* Weekday header row */
+.weekday-header th {
+  font-weight: 400;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Day number row */
+.day-number-header th {
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+/* Weekend column headers */
+.weekend-col {
+  color: #d97757;
+}
+
+/* Employee name column */
+.leave-table tbody td:first-child {
+  white-space: nowrap;
+  font-weight: 500;
+  background: #f9fafb;
+}
+
+.weekday-header .month-name-cell {
+  color: #009BFE !important;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+
+/* ===========================
+   Leave Cells
+   =========================== */
+
+.leave-cell {
+  min-width: 26px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.leave-table {
+  table-layout: fixed;
+}
+
+.leave-table th:first-child,
+.leave-table td:first-child {
+  width: 160px;
+}
+
+.leave-table th.day-col,
+.leave-table td.leave-cell {
+  width: 28px;
+  max-width: 28px;
+}
+
+
+.leave-cell.readonly {
+  cursor: default;
+}
+
+/* Weekend base tint */
+.leave-cell.weekend-cell {
+  background-color: #fff7f0;
+}
+
+/* Weekend cells with F/H */
+.leave-cell.weekend-occupied {
+  background-color: #ffb38a !important;
+}
+
+/* Public holiday cells: darker orange */
+.leave-cell.holiday-cell {
+  background-color: #ff9248 !important;
+  color: #2c1600;
+}
+
+/* Birthday cells: green highlight */
+.leave-cell.birthday-cell {
+  background-color: #e9f3d3 !important;
+}
+
+/* ===========================
+   Forms & Inputs
+   =========================== */
+
+.form-control {
+  border-radius: 999px;
+  border-color: #d1d5db;
+  font-size: 0.85rem;
+  padding: 4px 10px;
+}
+
+.form-control:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+
+.form-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Checkboxes */
+.form-check-input {
+  border-radius: 6px;
+  border-color: #d1d5db;
+}
+
+.form-check-input:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+
+
+/* ===========================
+   Misc
+   =========================== */
+
+a.btn-link {
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+
+a.btn-link:hover {
+  text-decoration: underline;
+}
+
+.table-responsive {
+  border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+  .app-wrapper {
+    padding: 0 8px;
+    margin-top: 16px;
+  }
+}
+
+/* Year dropdown styled like a pill button */
+.year-select {
+  width: auto;
+  min-width: 80px;
+  border-radius: 999px;
+  border-color: var(--accent);
+  font-size: 0.8rem;
+  padding: 4px 28px 4px 10px;
+  background-color: #ffffff;
+  background-image: var(--bs-form-select-bg-img);
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 12px;
+}
+
+/* Leave days chips in Manage Employees */
+.leave-days-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.leave-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: #f3f4f6;
+  font-size: 0.75rem;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.leave-chip-year {
+  font-weight: 600;
+}
+
+.leave-chip-days {
+  opacity: 0.8;
+}
+
+/* ===========================
+   KMP Logo + Header
+   =========================== */
+
+.kmp-header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.kmp-logo {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+.kmp-calendar-subtitle {
+  font-size: 1rem;
+  color: #111827;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+
+
+/* ===========================
+   Calendar legend
+   =========================== */
+
+.calendar-legend .card-body {
+  padding: 8px 12px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Match existing colours used in the calendar cells */
+.legend-swatch-weekend {
+  background-color: #fff7f0;  /* weekend-cell */
+}
+
+.legend-swatch-holiday {
+  background-color: #ff9248;  /* holiday-cell */
+}
+
+.legend-swatch-birthday {
+  background-color: #e9f3d3;  /* birthday-cell */
+}
+
+.legend-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid #d1d5db;
+  background-color: #f9fafb;
+}
+
+.legend-badge-f {
+  color: #111827;
+}
+
+.legend-badge-h {
+  color: #4b5563;
+}
