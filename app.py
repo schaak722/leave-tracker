@@ -22,10 +22,15 @@ app = Flask(__name__)
 # Load from config.py
 app.config["SECRET_KEY"] = config.SECRET_KEY
 
-# SQLite database path (can be overridden via env var)
-default_db_path = os.path.join(os.path.dirname(__file__), "leave_calendar.db")
-db_path = os.environ.get("DATABASE_PATH", default_db_path)
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+# Prefer DATABASE_URL (Postgres in production), fall back to SQLite locally
+database_url = os.environ.get("DATABASE_URL")
+
+if not database_url:
+    # Local development fallback: SQLite file next to app.py
+    default_db_path = os.path.join(os.path.dirname(__file__), "leave_calendar.db")
+    database_url = f"sqlite:///{default_db_path}"
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
