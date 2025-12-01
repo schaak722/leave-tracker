@@ -279,6 +279,10 @@ def initdb():
 
 @app.route("/")
 def index():
+    # Require login to see anything
+    if not g.user:
+        return redirect(url_for("login"))
+
     current_year = datetime.now().year
     return redirect(url_for("calendar_view", year=current_year))
 
@@ -363,6 +367,10 @@ def logout():
 
 @app.route("/calendar/<int:year>")
 def calendar_view(year):
+    # Require login to view the calendar
+    if not g.user:
+        return redirect(url_for("login"))
+
     current_year = datetime.now().year
     years = get_available_years(current_year, year)
 
