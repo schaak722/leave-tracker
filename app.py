@@ -539,7 +539,6 @@ def manage_employees():
     employees = Employee.query.order_by(Employee.name).all()
     return render_template("manage_employees.html", employees=employees)
 
-
 @app.route("/admin/employee/<int:employee_id>/edit", methods=["GET", "POST"])
 def edit_employee(employee_id):
     if not g.is_admin:
@@ -633,7 +632,6 @@ def edit_employee(employee_id):
         current_year=current_year,
         current_year_ent_days=current_year_ent_days,
     )
-
 
 @app.route("/admin/employee/<int:employee_id>/delete", methods=["POST"])
 def delete_employee(employee_id):
