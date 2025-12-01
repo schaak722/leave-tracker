@@ -46,6 +46,35 @@
     {% endblock %}
   </div>
 
+    {% block content %}
+      {% if content %}
+        {{ content|safe }}
+      {% endif %}
+    {% endblock %}
+  </div>
+
+  <footer class="lt-footer border-top">
+    <div class="container d-flex justify-content-between align-items-center">
+      <p class="mb-0 text-muted small">
+        All rights reserved
+      </p>
+      <p class="mb-0 small">
+        Developed by
+        <a href="https://schaak.mt" target="_blank" rel="noopener" class="lt-footer-link">
+          Schaak.mt
+        </a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+          crossorigin="anonymous"></script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>
+  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
           integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
           crossorigin="anonymous"></script>
