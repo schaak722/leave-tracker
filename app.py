@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import calendar
 import os
 from collections import defaultdict
@@ -236,21 +236,68 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    """
+    Admin login with simple per-session rate limiting:
+    - After 5 failed attempts, lock further attempts for 10 minutes.
+    """
+    error = None
+    username = ""
+
+    # --- check for existing lockout ---
+    lock_until_str = session.get("login_lock_until")
+    locked = False
+
+    if lock_until_str:
+        try:
+            lock_until = datetime.fromisoformat(lock_until_str)
+            # Use UTC for consistency
+            if datetime.utcnow() < lock_until:
+                locked = True
+            else:
+                # Lockout expired, reset counters
+                session.pop("login_lock_until", None)
+                session.pop("login_attempts", None)
+        except ValueError:
+            # Bad data? Reset lock info.
+            session.pop("login_lock_until", None)
+            session.pop("login_attempts", None)
+
     if request.method == "POST":
-        username = request.form.get("username", "")
+        username = (request.form.get("username") or "").strip()
         password = request.form.get("password", "")
 
+        # If locked, do not even check credentials
+        if locked:
+            error = "Too many failed login attempts. Please try again later."
+            return render_template("login.html", error=error, username=username)
+
+        # Check credentials
         if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             session["is_admin"] = True
+            # Clear any previous failure tracking
+            session.pop("login_attempts", None)
+            session.pop("login_lock_until", None)
             return redirect(url_for("index"))
+
+        # Credentials invalid: increment attempt counter
+        attempts = session.get("login_attempts", 0) + 1
+        session["login_attempts"] = attempts
+
+        if attempts >= 5:
+            # Lock for 10 minutes
+            lock_until = datetime.utcnow() + timedelta(minutes=10)
+            session["login_lock_until"] = lock_until.isoformat()
+            error = "Too many failed login attempts. Please try again later."
         else:
-            return render_template(
-                "login.html",
-                error="Invalid username or password",
-            )
+            error = "Invalid username or password."
 
-    return render_template("login.html")
+        return render_template("login.html", error=error, username=username)
 
+    # GET: show lockout message if still locked
+    if locked:
+        error = "Too many failed login attempts. Please try again later."
+
+    return render_template("login.html", error=error, username=username)
 
 @app.route("/logout")
 def logout():
