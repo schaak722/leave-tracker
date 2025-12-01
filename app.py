@@ -35,11 +35,31 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# Admin login from config.py
+# Admin login from config.py (used only for bootstrapping the first admin user)
 ADMIN_USERNAME = config.ADMIN_USERNAME
 ADMIN_PASSWORD = config.ADMIN_PASSWORD
 
+@app.before_first_request
+def ensure_admin_user():
+    """
+    Ensure DB tables exist and that there is at least one admin user.
+    The first admin is bootstrapped from ADMIN_USERNAME / ADMIN_PASSWORD.
+    """
+    db.create_all()
 
+    admin_exists = User.query.filter_by(role="admin").first()
+    if not admin_exists:
+        username = ADMIN_USERNAME or "admin"
+        password = ADMIN_PASSWORD or "change-me"
+
+        user = User(
+            username=username,
+            role="admin",
+            active=True,
+        )
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
 
 # ---------------------------
 # Models
@@ -87,14 +107,34 @@ class LeaveEntry(db.Model):
     def __repr__(self):
         return f"<LeaveEntry {self.employee.name} {self.date} {self.code}>"
 
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(20), default="admin")  # "admin" or "user"
+    active = db.Column(db.Boolean, default=True)
+
+    def set_password(self, password: str):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        return check_password_hash(self.password_hash, password)
 
 # ---------------------------
 # Helpers
 # ---------------------------
 
 @app.before_request
-def load_admin_flag():
-    g.is_admin = session.get("is_admin", False)
+def load_logged_in_user():
+    g.user = None
+    g.is_admin = False
+
+    user_id = session.get("user_id")
+    if user_id is not None:
+        user = User.query.get(user_id)
+        if user and user.active:
+            g.user = user
+            g.is_admin = (user.role == "admin")
 
 def get_available_years(current_year: int, selected_year: int):
     """
@@ -240,11 +280,10 @@ def index():
     current_year = datetime.now().year
     return redirect(url_for("calendar_view", year=current_year))
 
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """
-    Admin login with simple per-session rate limiting:
+    Admin/user login with simple per-session rate limiting:
     - After 5 failed attempts, lock further attempts for 10 minutes.
     """
     error = None
@@ -278,9 +317,14 @@ def login():
             error = "Too many failed login attempts. Please try again later."
             return render_template("login.html", error=error, username=username)
 
-        # Check credentials
-        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-            session["is_admin"] = True
+        # Look up user
+        user = User.query.filter_by(username=username, active=True).first()
+
+        if user and user.check_password(password):
+            # Successful login
+            session.clear()
+            session["user_id"] = user.id
+            session["is_admin"] = (user.role == "admin")
             # Clear any previous failure tracking
             session.pop("login_attempts", None)
             session.pop("login_lock_until", None)
@@ -304,13 +348,16 @@ def login():
     if locked:
         error = "Too many failed login attempts. Please try again later."
 
+    # If user is already logged in, optionally redirect away from login page
+    if g.user:
+        return redirect(url_for("index"))
+
     return render_template("login.html", error=error, username=username)
 
 @app.route("/logout")
 def logout():
-    session.pop("is_admin", None)
-    return redirect(url_for("index"))
-
+    session.clear()
+    return redirect(url_for("login"))
 
 @app.route("/calendar/<int:year>")
 def calendar_view(year):
