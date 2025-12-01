@@ -8,10 +8,10 @@ from flask import (
     url_for, session, g, jsonify, abort
 )
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 
 import config          # SECRET_KEY, ADMIN_USERNAME, ADMIN_PASSWORD
 import public_holidays # PUBLIC_HOLIDAYS dict
-
 
 # ---------------------------
 # App & DB config
