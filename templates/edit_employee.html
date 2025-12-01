@@ -75,14 +75,25 @@
 <div class="card">
   <div class="card-body">
     {% if employee.entitlements %}
-      <ul class="mb-2">
-      {% for ent in employee.entitlements|sort(attribute="year") %}
-        <li>{{ ent.year }}: {{ "%.1f"|format(ent.days) }} days</li>
-      {% endfor %}
-      </ul>
-    {% else %}
-      <p class="mb-2">No leave days defined.</p>
-    {% endif %}
+  <ul class="mb-2">
+  {% for ent in employee.entitlements|sort(attribute="year") %}
+    <li>
+      {{ ent.year }}: {{ "%.1f"|format(ent.days) }} days
+      <form method="post"
+            action="{{ url_for('delete_entitlement', employee_id=employee.id, year=ent.year) }}"
+            class="d-inline"
+            onsubmit="return confirm('Remove leave days for {{ ent.year }} for {{ employee.name }}?');">
+        <button type="submit"
+                class="btn btn-link btn-sm text-danger p-0 ms-2">
+          Remove
+        </button>
+      </form>
+    </li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p class="mb-2">No leave days defined.</p>
+{% endif %}
 
     <p class="text-muted mb-0" style="font-size: 0.8rem;">
       Use the fields above to change or add leave days for any year.
