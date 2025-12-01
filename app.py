@@ -489,7 +489,7 @@ def add_employee():
             db.session.add(ent)
 
         db.session.commit()
-        return redirect(url_for("calendar_view", year=year))
+        return redirect(url_for("manage_employees"))
 
     current_year = datetime.now().year
     return render_template(
