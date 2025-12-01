@@ -39,27 +39,27 @@ db = SQLAlchemy(app)
 ADMIN_USERNAME = config.ADMIN_USERNAME
 ADMIN_PASSWORD = config.ADMIN_PASSWORD
 
-@app.before_first_request
 def ensure_admin_user():
     """
     Ensure DB tables exist and that there is at least one admin user.
     The first admin is bootstrapped from ADMIN_USERNAME / ADMIN_PASSWORD.
     """
-    db.create_all()
+    with app.app_context():
+        db.create_all()
 
-    admin_exists = User.query.filter_by(role="admin").first()
-    if not admin_exists:
-        username = ADMIN_USERNAME or "admin"
-        password = ADMIN_PASSWORD or "change-me"
+        admin_exists = User.query.filter_by(role="admin").first()
+        if not admin_exists:
+            username = ADMIN_USERNAME or "admin"
+            password = ADMIN_PASSWORD or "change-me"
 
-        user = User(
-            username=username,
-            role="admin",
-            active=True,
-        )
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
+            user = User(
+                username=username,
+                role="admin",
+                active=True,
+            )
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
 
 # ---------------------------
 # Models
@@ -119,6 +119,8 @@ class User(db.Model):
 
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
+
+ensure_admin_user()
 
 # ---------------------------
 # Helpers
