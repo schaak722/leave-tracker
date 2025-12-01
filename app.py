@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from flask import (
     Flask, render_template, request, redirect,
-    url_for, session, g, jsonify
+    url_for, session, g, jsonify, abort
 )
 from flask_sqlalchemy import SQLAlchemy
 
@@ -215,12 +215,18 @@ def parse_birthday(birthday_str: str):
 @app.route("/initdb")
 def initdb():
     """
-    One-off: create DB tables.
-    Call this once after deleting/creating a new DB.
-    """
-    db.create_all()
-    return "Database initialised. You can remove /initdb route after first run."
+    Protected DB initialisation route.
 
+    In production this is disabled by default so random people
+    can't hit it. To enable temporarily, set ENABLE_INITDB=true
+    in the environment, call this route once, then turn it off.
+    """
+    enable_initdb = os.environ.get("ENABLE_INITDB", "false").lower() == "true"
+    if not enable_initdb:
+        abort(404)
+
+    db.create_all()
+    return "Database initialised. You can now turn off ENABLE_INITDB."
 
 @app.route("/")
 def index():
