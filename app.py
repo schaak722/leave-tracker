@@ -96,29 +96,36 @@ class LeaveEntry(db.Model):
 def load_admin_flag():
     g.is_admin = session.get("is_admin", False)
 
-
-def get_available_years(current_year: int):
+def get_available_years(current_year: int, selected_year: int):
     """
-    Return a sorted list of years that have entitlements or entries.
-    Fallback to [current_year] if none yet.
+    Return a sorted list of years that:
+      - have entitlements or entries, OR
+      - are the current calendar year, OR
+      - are the currently selected year in the UI.
+
+    This guarantees that:
+      - the current year is always in the dropdown, and
+      - the selected year never disappears when you switch.
     """
     years = set()
 
+    # Years that have entitlement records
     ent_years = db.session.query(Entitlement.year).distinct().all()
     for y, in ent_years:
         years.add(y)
 
+    # Years that have leave entries
     entry_years = db.session.query(
         db.extract("year", LeaveEntry.date)
     ).distinct().all()
     for y in entry_years:
         years.add(int(y[0]))
 
-    if not years:
-        years.add(current_year)
+    # Always include current calendar year and currently selected year
+    years.add(current_year)
+    years.add(selected_year)
 
     return sorted(years)
-
 
 def get_public_holiday_dates(year: int):
     """
