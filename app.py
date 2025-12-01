@@ -728,6 +728,73 @@ def delete_employee(employee_id):
 
     return redirect(url_for("manage_employees"))
 
+@app.route("/admin/users", methods=["GET"])
+def manage_users():
+    if not g.is_admin:
+        return redirect(url_for("login"))
+
+    users = User.query.order_by(User.username).all()
+    error = request.args.get("error")
+    return render_template("manage_users.html", users=users, error=error)
+
+
+@app.route("/admin/users/create", methods=["POST"])
+def create_user():
+    if not g.is_admin:
+        return redirect(url_for("login"))
+
+    username = (request.form.get("username") or "").strip()
+    password = request.form.get("password") or ""
+    role = (request.form.get("role") or "user").strip()
+
+    if not username or not password:
+        return redirect(url_for("manage_users", error="Username and password are required."))
+
+    existing = User.query.filter_by(username=username).first()
+    if existing:
+        return redirect(url_for("manage_users", error="A user with that username already exists."))
+
+    if role not in ("admin", "user"):
+        role = "user"
+
+    user = User(
+        username=username,
+        role=role,
+        active=True,
+    )
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+
+    return redirect(url_for("manage_users"))
+
+@app.route("/admin/users/<int:user_id>/update", methods=["POST"])
+def update_user(user_id):
+    if not g.is_admin:
+        return redirect(url_for("login"))
+
+    user = User.query.get_or_404(user_id)
+
+    # Basic fields
+    role = (request.form.get("role") or user.role).strip()
+    active = True if request.form.get("active") == "on" else False
+    new_password = request.form.get("password") or ""
+
+    if role not in ("admin", "user"):
+        role = user.role
+
+    # Optional: avoid locking yourself out completely
+    # (We keep it simple for now and trust you not to disable the only admin.)
+
+    user.role = role
+    user.active = active
+
+    if new_password:
+        user.set_password(new_password)
+
+    db.session.commit()
+
+    return redirect(url_for("manage_users"))
 
 # ---------------------------
 # Run (for local development)
