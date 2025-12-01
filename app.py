@@ -315,7 +315,7 @@ def logout():
 @app.route("/calendar/<int:year>")
 def calendar_view(year):
     current_year = datetime.now().year
-    years = get_available_years(current_year)
+    years = get_available_years(current_year, year)
 
     employees, per_employee, cell_codes = compute_year_summary(year)
 
