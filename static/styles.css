@@ -498,3 +498,44 @@ a.btn-link:hover {
     margin-top: 16px;
   }
 }
+
+/* ===========================
+   Footer
+   =========================== */
+
+.lt-footer {
+  background: #ffffff;
+  border-top: 1px solid var(--border-subtle);
+  height: 72px;            /* match header height / feel */
+  display: flex;
+  align-items: center;
+}
+
+.lt-footer .container {
+  height: 100%;
+}
+
+.lt-footer-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.lt-footer-link:hover {
+  text-decoration: underline;
+}
+
+/* Stack nicely on mobile */
+@media (max-width: 768px) {
+  .lt-footer {
+    height: auto;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .lt-footer .container {
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+}
+
