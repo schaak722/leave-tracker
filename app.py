@@ -633,6 +633,34 @@ def edit_employee(employee_id):
         current_year_ent_days=current_year_ent_days,
     )
 
+@app.route("/admin/employee/<int:employee_id>/entitlement/<int:year>/delete", methods=["POST"])
+def delete_entitlement(employee_id, year):
+    if not g.is_admin:
+        return redirect(url_for("login"))
+
+    emp = Employee.query.get_or_404(employee_id)
+
+    # Delete any leave entries for this employee in that year
+    entries = (
+        LeaveEntry.query
+        .filter(
+            LeaveEntry.employee_id == emp.id,
+            db.extract("year", LeaveEntry.date) == year,
+        )
+        .all()
+    )
+    for entry in entries:
+        db.session.delete(entry)
+
+    # Delete the entitlement for that year, if it exists
+    ent = Entitlement.query.filter_by(employee_id=emp.id, year=year).first()
+    if ent:
+        db.session.delete(ent)
+
+    db.session.commit()
+
+    return redirect(url_for("edit_employee", employee_id=emp.id))
+
 @app.route("/admin/employee/<int:employee_id>/delete", methods=["POST"])
 def delete_employee(employee_id):
     if not g.is_admin:
