@@ -28,13 +28,19 @@
     <a href="{{ url_for('request_leave') }}" class="btn btn-outline-primary btn-sm me-2">
       Request leave
     </a>
-
-    {% if g.is_admin %}
-      <a href="{{ url_for('manage_employees') }}" class="btn btn-outline-secondary btn-sm me-2">
-        Manage Employees
+  
+  {% if g.is_admin or g.is_manager %}
+    <a href="{{ url_for('list_leave_requests') }}" class="btn btn-outline-secondary btn-sm me-2">
+      Leave requests
       </a>
-      <a href="{{ url_for('manage_users') }}" class="btn btn-outline-secondary btn-sm me-2">
-        Manage Users
+    {% endif %}
+  
+  {% if g.is_admin %}
+    <a href="{{ url_for('manage_employees') }}" class="btn btn-outline-secondary btn-sm me-2">
+      Manage Employees
+      </a>
+    <a href="{{ url_for('manage_users') }}" class="btn btn-outline-secondary btn-sm me-2">
+      Manage Users
       </a>
     {% endif %}
 
@@ -51,7 +57,6 @@
     </div>  
   </div>
 </nav>
-
   <div class="app-wrapper">
     {% block content %}
       {% if content %}
