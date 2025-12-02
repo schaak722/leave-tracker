@@ -31,11 +31,21 @@
             <label class="form-label form-label-sm" for="password">Password</label>
             <input type="password" name="password" id="password" class="form-control form-control-sm" required>
           </div>
-          <div class="mb-3">
+          <div class="mb-2">
             <label class="form-label form-label-sm" for="role">Role</label>
             <select name="role" id="role" class="form-select form-select-sm">
+              <option value="employee" selected>Employee</option>
+              <option value="manager">Manager</option>
               <option value="admin">Admin</option>
-              <option value="user">User</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label form-label-sm" for="employee_id">Linked employee (optional)</label>
+            <select name="employee_id" id="employee_id" class="form-select form-select-sm">
+              <option value="">-- None --</option>
+              {% for e in employees %}
+                <option value="{{ e.id }}">{{ e.name }}</option>
+              {% endfor %}
             </select>
           </div>
           <button type="submit" class="btn btn-primary btn-sm">
@@ -58,6 +68,7 @@
                   <th>Username</th>
                   <th>Role</th>
                   <th>Active</th>
+                  <th>Linked employee</th>
                   <th>New password</th>
                   <th style="width: 1%"></th>
                 </tr>
@@ -75,14 +86,32 @@
                       <td>
                         <select name="role" class="form-select form-select-sm"
                                 {% if g.user and g.user.id == u.id %}disabled{% endif %}>
-                          <option value="admin" {% if u.role == "admin" %}selected{% endif %}>Admin</option>
-                          <option value="user" {% if u.role == "user" %}selected{% endif %}>User</option>
+                          <option value="employee" {% if u.role == "employee" or u.role == "user" %}selected{% endif %}>
+                            Employee
+                          </option>
+                          <option value="manager" {% if u.role == "manager" %}selected{% endif %}>
+                            Manager
+                          </option>
+                          <option value="admin" {% if u.role == "admin" %}selected{% endif %}>
+                            Admin
+                          </option>
                         </select>
                       </td>
                       <td class="text-center">
                         <input type="checkbox" name="active"
                                {% if u.active %}checked{% endif %}
                                {% if g.user and g.user.id == u.id %}disabled{% endif %}>
+                      </td>
+                      <td>
+                        <select name="employee_id" class="form-select form-select-sm">
+                          <option value="">-- None --</option>
+                          {% for e in employees %}
+                            <option value="{{ e.id }}"
+                              {% if u.employee_id == e.id %}selected{% endif %}>
+                              {{ e.name }}
+                            </option>
+                          {% endfor %}
+                        </select>
                       </td>
                       <td>
                         <input type="password" name="password"
