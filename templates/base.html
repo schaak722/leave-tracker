@@ -23,31 +23,34 @@
                class="kmp-logo">
         </a>
       </div>
-      <div class="app-nav-right">
-        {% if g.user %}
-          {# Logged-in users #}
-          {% if g.is_admin %}
-            <a href="{{ url_for('manage_employees') }}" class="btn btn-outline-secondary btn-sm me-2">
-              Manage Employees
-            </a>
-            <a href="{{ url_for('manage_users') }}" class="btn btn-outline-secondary btn-sm me-2">
-              Manage Users
-            </a>
-          {% endif %}
-          <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">
-            Logout
-          </a>
-        {% else %}
-          {# Not logged in: show login button everywhere except on the login page itself #}
-          {% if request.endpoint != 'login' %}
-            <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-sm">
-              Employee login
-            </a>
-          {% endif %}
-        {% endif %}
-      </div>
-    </div>
-  </nav>
+<div class="app-nav-right">
+  {% if g.user %}
+    <a href="{{ url_for('request_leave') }}" class="btn btn-outline-primary btn-sm me-2">
+      Request leave
+    </a>
+
+    {% if g.is_admin %}
+      <a href="{{ url_for('manage_employees') }}" class="btn btn-outline-secondary btn-sm me-2">
+        Manage Employees
+      </a>
+      <a href="{{ url_for('manage_users') }}" class="btn btn-outline-secondary btn-sm me-2">
+        Manage Users
+      </a>
+    {% endif %}
+
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">
+      Logout
+    </a>
+  {% else %}
+    {% if request.endpoint != 'login' %}
+      <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-sm">
+        Employee login
+      </a>
+    {% endif %}
+      {% endif %}
+    </div>  
+  </div>
+</nav>
 
   <div class="app-wrapper">
     {% block content %}
