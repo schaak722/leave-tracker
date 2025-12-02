@@ -411,6 +411,9 @@ def calendar_view(year):
 
 @app.route("/employee/<int:employee_id>/<int:year>")
 def employee_summary(employee_id, year):
+    if not g.user:
+        return redirect(url_for("login"))
+
     emp = Employee.query.get_or_404(employee_id)
     entries = (
         LeaveEntry.query
