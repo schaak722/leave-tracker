@@ -700,7 +700,8 @@ def decide_leave_request(request_id):
 
 @app.route("/update_cell", methods=["POST"])
 def update_cell():
-    if not g.is_admin:
+    # Only admins or managers can edit calendar cells (F/H)
+    if not (g.is_admin or g.is_manager):
         return jsonify({"success": False, "error": "Not authorised"}), 403
 
     data = request.get_json() or {}
