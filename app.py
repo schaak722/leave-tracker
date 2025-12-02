@@ -234,6 +234,26 @@ def get_public_holiday_dates(year: int):
             continue
     return dates
 
+def is_public_holiday(d: date) -> bool:
+    """
+    Return True if this date is in the PUBLIC_HOLIDAYS dict.
+    """
+    dates_for_year = public_holidays.PUBLIC_HOLIDAYS.get(d.year, [])
+    # PUBLIC_HOLIDAYS uses "YYYY-MM-DD" strings
+    return d.isoformat() in dates_for_year
+
+def iterate_working_days(start_date: date, end_date: date):
+    """
+    Yield all working days (Mon–Fri) between start_date and end_date,
+    skipping weekends and public holidays.
+    """
+    current = start_date
+    while current <= end_date:
+        # weekday(): 0=Mon, 6=Sun
+        if current.weekday() < 5 and not is_public_holiday(current):
+            yield current
+        current += timedelta(days=1)
+
 def compute_year_summary(year: int):
     """
     Return:
@@ -305,7 +325,6 @@ def compute_employee_year_summary(employee_id: int, year: int):
 
     return entitlement_days, taken, remaining
 
-
 def parse_birthday(birthday_str: str):
     """
     Try to parse a birthday from several common formats.
@@ -327,7 +346,6 @@ def parse_birthday(birthday_str: str):
             continue
 
     return None
-
 
 # ---------------------------
 # Routes
@@ -603,6 +621,82 @@ def request_leave():
         error=error,
         success=success,
     )
+
+@app.route("/admin/leave_requests", methods=["GET"])
+def list_leave_requests():
+    if not (g.is_admin or g.is_manager):
+        return redirect(url_for("login"))
+
+    # Filter: pending by default, or ?status=all / approved / rejected / cancelled
+    filter_status = request.args.get("status", "pending")
+
+    query = (
+        LeaveRequest.query
+        .join(Employee)
+        .order_by(LeaveRequest.created_at.desc())
+    )
+
+    if filter_status != "all":
+        query = query.filter(LeaveRequest.status == filter_status)
+
+    requests = query.all()
+
+    return render_template(
+        "manage_leave_requests.html",
+        requests=requests,
+        filter_status=filter_status,
+    )
+
+@app.route("/admin/leave_requests/<int:request_id>/decision", methods=["POST"])
+def decide_leave_request(request_id):
+    if not (g.is_admin or g.is_manager):
+        return redirect(url_for("login"))
+
+    lr = LeaveRequest.query.get_or_404(request_id)
+
+    # Only allow acting on pending requests
+    if lr.status != "pending":
+        return redirect(url_for("list_leave_requests", status="pending"))
+
+    action = (request.form.get("action") or "").strip()
+    manager_comment = (request.form.get("manager_comment") or "").strip()
+
+    if action not in ("approve", "reject"):
+        return redirect(url_for("list_leave_requests", status="pending"))
+
+    lr.decision_by_id = g.user.id
+    lr.decision_at = datetime.utcnow()
+    lr.manager_comment = manager_comment or None
+
+    if action == "approve":
+        lr.status = "approved"
+
+        # Create LeaveEntry rows for each working day in the range
+        for d in iterate_working_days(lr.start_date, lr.end_date):
+            # Skip if an entry already exists for this employee/date
+            existing = (
+                LeaveEntry.query
+                .filter_by(employee_id=lr.employee_id, date=d)
+                .first()
+            )
+            if existing:
+                continue
+
+            value = 1.0 if lr.code == "F" else 0.5
+            entry = LeaveEntry(
+                employee_id=lr.employee_id,
+                date=d,
+                code=lr.code,
+                value=value,
+            )
+            db.session.add(entry)
+
+    elif action == "reject":
+        lr.status = "rejected"
+
+    db.session.commit()
+
+    return redirect(url_for("list_leave_requests", status="pending"))
 
 @app.route("/update_cell", methods=["POST"])
 def update_cell():
