@@ -226,7 +226,6 @@ def get_public_holiday_dates(year: int):
             continue
     return dates
 
-
 def compute_year_summary(year: int):
     """
     Return:
@@ -275,6 +274,28 @@ def compute_year_summary(year: int):
         cell_codes[key] = entry.code
 
     return employees, per_employee, cell_codes
+
+def compute_employee_year_summary(employee_id: int, year: int):
+    """
+    Return entitlement, taken, remaining for a single employee in a given year.
+    """
+    entitlement = (
+        Entitlement.query
+        .filter_by(employee_id=employee_id, year=year)
+        .first()
+    )
+    entitlement_days = entitlement.days if entitlement else 0.0
+
+    entries = (
+        LeaveEntry.query
+        .filter(LeaveEntry.employee_id == employee_id)
+        .filter(db.extract("year", LeaveEntry.date) == year)
+        .all()
+    )
+    taken = sum(e.value for e in entries)
+    remaining = entitlement_days - taken
+
+    return entitlement_days, taken, remaining
 
 
 def parse_birthday(birthday_str: str):
@@ -451,7 +472,6 @@ def calendar_view(year):
         public_holiday_dates=public_holiday_dates,
     )
 
-
 @app.route("/employee/<int:employee_id>/<int:year>")
 def employee_summary(employee_id, year):
     if not g.user:
@@ -485,6 +505,96 @@ def employee_summary(employee_id, year):
         remaining=remaining,
     )
 
+@app.route("/leave/request", methods=["GET", "POST"])
+def request_leave():
+    # Must be logged in
+    if not g.user:
+        return redirect(url_for("login"))
+
+    # Require the user to be linked to an Employee
+    employee = None
+    if hasattr(g.user, "employee") and g.user.employee:
+        employee = g.user.employee
+    elif getattr(g.user, "employee_id", None):
+        employee = Employee.query.get(g.user.employee_id)
+
+    if not employee:
+        # No employee record linked: we can't know whose leave to track
+        error = "Your user account is not linked to an employee. Please contact an admin."
+        return render_template(
+            "request_leave.html",
+            employee=None,
+            error=error,
+            year=None,
+            entitlement=None,
+            taken=None,
+            remaining=None,
+            requests=[],
+        )
+
+    error = None
+    success = None
+    current_year = datetime.now().year
+
+    if request.method == "POST":
+        start_str = (request.form.get("start_date") or "").strip()
+        end_str = (request.form.get("end_date") or "").strip()
+        code = (request.form.get("code") or "").strip().upper()
+        comment = (request.form.get("comment") or "").strip()
+
+        # Basic validation
+        if not start_str or not end_str or code not in ("F", "H"):
+            error = "Please provide a start date, end date, and select full-day or half-day."
+        else:
+            try:
+                start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
+                end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
+            except ValueError:
+                error = "Invalid date format."
+
+        if not error and end_date < start_date:
+            error = "End date cannot be before start date."
+
+        if not error:
+            # Create a pending request
+            lr = LeaveRequest(
+                employee_id=employee.id,
+                requested_by_id=g.user.id,
+                start_date=start_date,
+                end_date=end_date,
+                code=code,
+                status="pending",
+                decision_comment=comment or None,
+            )
+            db.session.add(lr)
+            db.session.commit()
+            success = "Your leave request has been submitted."
+
+    # Summary for the current year
+    entitlement, taken, remaining = compute_employee_year_summary(
+        employee.id,
+        current_year,
+    )
+
+    # All requests for this employee, newest first
+    requests = (
+        LeaveRequest.query
+        .filter_by(employee_id=employee.id)
+        .order_by(LeaveRequest.created_at.desc())
+        .all()
+    )
+
+    return render_template(
+        "request_leave.html",
+        employee=employee,
+        year=current_year,
+        entitlement=entitlement,
+        taken=taken,
+        remaining=remaining,
+        requests=requests,
+        error=error,
+        success=success,
+    )
 
 @app.route("/update_cell", methods=["POST"])
 def update_cell():
