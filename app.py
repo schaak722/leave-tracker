@@ -111,8 +111,15 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), default="admin")  # "admin" or "user"
+
+    # Roles: "admin", "manager", "employee"
+    # Existing "user" values will be treated as "employee" for compatibility.
+    role = db.Column(db.String(20), default="employee")
     active = db.Column(db.Boolean, default=True)
+
+    # Optional link to an Employee record (for people whose leave you track)
+    employee_id = db.Column(db.Integer, db.ForeignKey("employee.id"), nullable=True)
+    employee = db.relationship("Employee", backref="users")
 
     def set_password(self, password: str):
         self.password_hash = generate_password_hash(password)
@@ -122,6 +129,32 @@ class User(db.Model):
 
 ensure_admin_user()
 
+class LeaveRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    employee_id = db.Column(db.Integer, db.ForeignKey("employee.id"), nullable=False)
+    employee = db.relationship("Employee", backref="leave_requests")
+
+    requested_by_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    requested_by = db.relationship("User", foreign_keys=[requested_by_id])
+
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    code = db.Column(db.String(1), nullable=False)  # "F" or "H"
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    status = db.Column(db.String(20), default="pending", nullable=False)
+    # "pending", "approved", "rejected", "cancelled"
+
+    decision_by_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    decision_by = db.relationship("User", foreign_keys=[decision_by_id])
+    decision_at = db.Column(db.DateTime)
+    decision_comment = db.Column(db.Text)
+
+    def __repr__(self):
+        return f"<LeaveRequest {self.employee.name} {self.start_date}–{self.end_date} {self.status}>"
+
+
 # ---------------------------
 # Helpers
 # ---------------------------
@@ -130,13 +163,23 @@ ensure_admin_user()
 def load_logged_in_user():
     g.user = None
     g.is_admin = False
+    g.is_manager = False
+    g.is_employee = False
 
     user_id = session.get("user_id")
     if user_id is not None:
         user = User.query.get(user_id)
         if user and user.active:
             g.user = user
-            g.is_admin = (user.role == "admin")
+
+            # Backwards compatible: treat legacy "user" as "employee"
+            role = user.role or "employee"
+            if role == "user":
+                role = "employee"
+
+            g.is_admin = (role == "admin")
+            g.is_manager = (role == "manager")
+            g.is_employee = (role == "employee")
 
 def get_available_years(current_year: int, selected_year: int):
     """
@@ -745,9 +788,15 @@ def manage_users():
         return redirect(url_for("login"))
 
     users = User.query.order_by(User.username).all()
+    employees = Employee.query.order_by(Employee.name).all()
     error = request.args.get("error")
-    return render_template("manage_users.html", users=users, error=error)
 
+    return render_template(
+        "manage_users.html",
+        users=users,
+        employees=employees,
+        error=error,
+    )
 
 @app.route("/admin/users/create", methods=["POST"])
 def create_user():
@@ -756,22 +805,41 @@ def create_user():
 
     username = (request.form.get("username") or "").strip()
     password = request.form.get("password") or ""
-    role = (request.form.get("role") or "user").strip()
+    role = (request.form.get("role") or "employee").strip()
+    employee_id_str = (request.form.get("employee_id") or "").strip()
 
     if not username or not password:
-        return redirect(url_for("manage_users", error="Username and password are required."))
+        return redirect(
+            url_for("manage_users", error="Username and password are required.")
+        )
 
     existing = User.query.filter_by(username=username).first()
     if existing:
-        return redirect(url_for("manage_users", error="A user with that username already exists."))
+        return redirect(
+            url_for("manage_users", error="A user with that username already exists.")
+        )
 
-    if role not in ("admin", "user"):
-        role = "user"
+    # Normalise role
+    if role not in ("admin", "manager", "employee"):
+        # Treat legacy "user" as employee
+        if role == "user":
+            role = "employee"
+        else:
+            role = "employee"
+
+    # Optional employee link
+    employee_id = None
+    if employee_id_str:
+        try:
+            employee_id = int(employee_id_str)
+        except ValueError:
+            employee_id = None
 
     user = User(
         username=username,
         role=role,
         active=True,
+        employee_id=employee_id,
     )
     user.set_password(password)
     db.session.add(user)
@@ -790,15 +858,27 @@ def update_user(user_id):
     role = (request.form.get("role") or user.role).strip()
     active = True if request.form.get("active") == "on" else False
     new_password = request.form.get("password") or ""
+    employee_id_str = (request.form.get("employee_id") or "").strip()
 
-    if role not in ("admin", "user"):
-        role = user.role
+    # Normalise role
+    if role not in ("admin", "manager", "employee"):
+        if role == "user":
+            role = "employee"
+        else:
+            role = user.role
 
-    # Optional: avoid locking yourself out completely
-    # (We keep it simple for now and trust you not to disable the only admin.)
+    # Optional employee linkage
+    employee_id = None
+    if employee_id_str:
+        try:
+            employee_id = int(employee_id_str)
+        except ValueError:
+            employee_id = user.employee_id
 
+    # Avoid locking yourself out is still your responsibility :)
     user.role = role
     user.active = active
+    user.employee_id = employee_id
 
     if new_password:
         user.set_password(new_password)
