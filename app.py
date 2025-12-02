@@ -146,13 +146,21 @@ class LeaveRequest(db.Model):
     status = db.Column(db.String(20), default="pending", nullable=False)
     # "pending", "approved", "rejected", "cancelled"
 
+    # This maps to the existing DB column "decision_comment" which we
+    # originally used for the employee's note.
+    employee_comment = db.Column("decision_comment", db.Text)
+
+    # New column for manager's decision comment (this will create a new
+    # nullable column manager_comment in the DB).
+    manager_comment = db.Column(db.Text)
+
     decision_by_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     decision_by = db.relationship("User", foreign_keys=[decision_by_id])
     decision_at = db.Column(db.DateTime)
-    decision_comment = db.Column(db.Text)
 
     def __repr__(self):
         return f"<LeaveRequest {self.employee.name} {self.start_date}–{self.end_date} {self.status}>"
+
 
 
 # ---------------------------
@@ -558,14 +566,14 @@ def request_leave():
         if not error:
             # Create a pending request
             lr = LeaveRequest(
-                employee_id=employee.id,
-                requested_by_id=g.user.id,
-                start_date=start_date,
-                end_date=end_date,
-                code=code,
-                status="pending",
-                decision_comment=comment or None,
-            )
+    employee_id=employee.id,
+    requested_by_id=g.user.id,
+    start_date=start_date,
+    end_date=end_date,
+    code=code,
+    status="pending",
+    employee_comment=comment or None,
+)
             db.session.add(lr)
             db.session.commit()
             success = "Your leave request has been submitted."
