@@ -554,6 +554,7 @@ def request_leave():
             taken=None,
             remaining=None,
             requests=[],
+            success=None,
         )
 
     error = None
@@ -561,38 +562,65 @@ def request_leave():
     current_year = datetime.now().year
 
     if request.method == "POST":
-        start_str = (request.form.get("start_date") or "").strip()
-        end_str = (request.form.get("end_date") or "").strip()
-        code = (request.form.get("code") or "").strip().upper()
+        # Multiple rows: each row has start_date, end_date, code
+        start_list = [(s or "").strip() for s in request.form.getlist("start_date")]
+        end_list = [(s or "").strip() for s in request.form.getlist("end_date")]
+        code_list = [(c or "").strip().upper() for c in request.form.getlist("code")]
         comment = (request.form.get("comment") or "").strip()
 
-        # Basic validation
-        if not start_str or not end_str or code not in ("F", "H"):
-            error = "Please provide a start date, end date, and select full-day or half-day."
-        else:
+        rows = []
+
+        # Validate each row
+        for idx, (start_str, end_str, code) in enumerate(
+            zip(start_list, end_list, code_list),
+            start=1,
+        ):
+            # Skip completely empty rows
+            if not start_str and not end_str and not code:
+                continue
+
+            if not start_str or not end_str or code not in ("F", "H"):
+                error = (
+                    f"Row {idx}: please provide a start date, end date, "
+                    "and select full-day or half-day."
+                )
+                break
+
             try:
                 start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
                 end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
             except ValueError:
-                error = "Invalid date format."
+                error = f"Row {idx}: invalid date format."
+                break
 
-        if not error and end_date < start_date:
-            error = "End date cannot be before start date."
+            if end_date < start_date:
+                error = f"Row {idx}: end date cannot be before start date."
+                break
+
+            rows.append((start_date, end_date, code))
 
         if not error:
-            # Create a pending request
-            lr = LeaveRequest(
-    employee_id=employee.id,
-    requested_by_id=g.user.id,
-    start_date=start_date,
-    end_date=end_date,
-    code=code,
-    status="pending",
-    employee_comment=comment or None,
-)
-            db.session.add(lr)
-            db.session.commit()
-            success = "Your leave request has been submitted."
+            if not rows:
+                error = "Please add at least one date or range."
+            else:
+                # Create one pending LeaveRequest per row
+                for start_date, end_date, code in rows:
+                    lr = LeaveRequest(
+                        employee_id=employee.id,
+                        requested_by_id=g.user.id,
+                        start_date=start_date,
+                        end_date=end_date,
+                        code=code,
+                        status="pending",
+                        employee_comment=comment or None,
+                    )
+                    db.session.add(lr)
+                db.session.commit()
+
+                if len(rows) == 1:
+                    success = "Your leave request has been submitted."
+                else:
+                    success = f"Your {len(rows)} leave requests have been submitted."
 
     # Summary for the current year
     entitlement, taken, remaining = compute_employee_year_summary(
