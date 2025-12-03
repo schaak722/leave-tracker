@@ -127,8 +127,6 @@ class User(db.Model):
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
 
-ensure_admin_user()
-
 class LeaveRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
@@ -161,7 +159,7 @@ class LeaveRequest(db.Model):
     def __repr__(self):
         return f"<LeaveRequest {self.employee.name} {self.start_date}–{self.end_date} {self.status}>"
 
-
+ensure_admin_user()
 
 # ---------------------------
 # Helpers
