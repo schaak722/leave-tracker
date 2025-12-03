@@ -189,4 +189,56 @@
   {% endif %}
 
 </div>
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    (function() {
+      const container = document.getElementById('date-rows');
+      const addBtn = document.getElementById('add-range-btn');
+      if (!container || !addBtn) return;
+
+      function updateRemoveButtons() {
+        const rows = container.querySelectorAll('.date-row');
+        rows.forEach((row) => {
+          const removeBtn = row.querySelector('.remove-row-btn');
+          if (!removeBtn) return;
+          if (rows.length === 1) {
+            removeBtn.classList.add('d-none');
+          } else {
+            removeBtn.classList.remove('d-none');
+          }
+        });
+      }
+
+      addBtn.addEventListener('click', function() {
+        const rows = container.querySelectorAll('.date-row');
+        if (!rows.length) return;
+        const last = rows[rows.length - 1];
+        const clone = last.cloneNode(true);
+
+        // Clear values in the cloned inputs/selects
+        clone.querySelectorAll('input[type="date"]').forEach(function(el) {
+          el.value = '';
+        });
+        clone.querySelectorAll('select').forEach(function(el) {
+          el.value = '';
+        });
+
+        container.appendChild(clone);
+        updateRemoveButtons();
+      });
+
+      container.addEventListener('click', function(evt) {
+        if (evt.target.classList.contains('remove-row-btn')) {
+          const row = evt.target.closest('.date-row');
+          if (!row) return;
+          row.remove();
+          updateRemoveButtons();
+        }
+      });
+
+      updateRemoveButtons();
+    })();
+  </script>
 {% endblock %}
