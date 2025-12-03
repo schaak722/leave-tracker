@@ -59,35 +59,50 @@
       <div class="card-body">
         <h2 class="h6 mb-3">New leave request</h2>
         <form method="post" action="{{ url_for('request_leave') }}">
-          <div class="row g-2 mb-3">
-            <div class="col-md-4">
-              <label for="start_date" class="form-label form-label-sm">Start date</label>
-              <input type="date"
-                     class="form-control form-control-sm"
-                     id="start_date"
-                     name="start_date"
-                     required>
-            </div>
-            <div class="col-md-4">
-              <label for="end_date" class="form-label form-label-sm">End date</label>
-              <input type="date"
-                     class="form-control form-control-sm"
-                     id="end_date"
-                     name="end_date"
-                     required>
-            </div>
-            <div class="col-md-4">
-              <label for="code" class="form-label form-label-sm">Type</label>
-              <select class="form-select form-select-sm"
-                      id="code"
-                      name="code"
-                      required>
-                <option value="">Select...</option>
-                <option value="F">Full-day leave</option>
-                <option value="H">Half-day leave</option>
-              </select>
+          <p class="small text-muted mb-2">
+            Add a range of dates or a single date, then optionally add more rows before submitting.
+          </p>
+
+          <div id="date-rows">
+            <div class="row g-2 mb-2 date-row">
+              <div class="col-md-4">
+                <label class="form-label form-label-sm">Start date</label>
+                <input type="date"
+                       class="form-control form-control-sm"
+                       name="start_date"
+                       required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label form-label-sm">End date</label>
+                <input type="date"
+                       class="form-control form-control-sm"
+                       name="end_date"
+                       required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label form-label-sm">Type</label>
+                <select class="form-select form-select-sm"
+                        name="code"
+                        required>
+                  <option value="">Select...</option>
+                  <option value="F">Full-day leave</option>
+                  <option value="H">Half-day leave</option>
+                </select>
+              </div>
+              <div class="col-md-1 d-flex align-items-end">
+                <button type="button"
+                        class="btn btn-outline-danger btn-sm w-100 d-none remove-row-btn">
+                  &times;
+                </button>
+              </div>
             </div>
           </div>
+
+          <button type="button"
+                  class="btn btn-outline-secondary btn-sm mb-3"
+                  id="add-range-btn">
+            Add another date or range
+          </button>
 
           <div class="mb-3">
             <label for="comment" class="form-label form-label-sm">
