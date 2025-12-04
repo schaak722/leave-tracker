@@ -30,8 +30,19 @@ if not database_url:
     default_db_path = os.path.join(os.path.dirname(__file__), "leave_calendar.db")
     database_url = f"sqlite:///{default_db_path}"
 
+# Optional: normalise old postgres:// URLs, just in case
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# IMPORTANT: make the DB pool resilient to idle timeouts
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,   # check connections before using them
+    "pool_recycle": 300,     # recycle connections every 5 minutes
+    # you *can* tweak pool_size/max_overflow if needed, but defaults are fine
+}
 
 db = SQLAlchemy(app)
 
