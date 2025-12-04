@@ -1132,8 +1132,9 @@ def update_user(user_id):
         return redirect(url_for("login"))
 
     user = User.query.get_or_404(user_id)
+    is_self = g.user is not None and g.user.id == user.id
 
-    # Basic fields
+    # Basic fields from the form
     role = (request.form.get("role") or user.role).strip()
     active = True if request.form.get("active") == "on" else False
     new_password = request.form.get("password") or ""
@@ -1141,6 +1142,7 @@ def update_user(user_id):
 
     # Normalise role
     if role not in ("admin", "manager", "employee"):
+        # Treat legacy "user" as employee
         if role == "user":
             role = "employee"
         else:
@@ -1153,8 +1155,15 @@ def update_user(user_id):
             employee_id = int(employee_id_str)
         except ValueError:
             employee_id = user.employee_id
+    else:
+        employee_id = None
 
-    # Avoid locking yourself out is still your responsibility :)
+    # If editing your own account, DO NOT change your role/active from the form
+    if is_self:
+        role = user.role
+        active = user.active
+
+    # Apply updates
     user.role = role
     user.active = active
     user.employee_id = employee_id
