@@ -559,12 +559,12 @@ def request_leave():
         return render_template(
             "request_leave.html",
             employee=None,
-            error=error,
             year=None,
             entitlement=None,
             taken=None,
             remaining=None,
             requests=[],
+            error=error,
             success=None,
         )
 
@@ -581,7 +581,6 @@ def request_leave():
 
         rows = []
 
-        # Validate each row
         for idx, (start_str, end_str, code) in enumerate(
             zip(start_list, end_list, code_list),
             start=1,
@@ -590,10 +589,11 @@ def request_leave():
             if not start_str and not end_str and not code:
                 continue
 
+            # Basic validation
             if not start_str or not end_str or code not in ("F", "H"):
                 error = (
-                    f"Row {idx}: please provide a start date, end date, "
-                    "and select full-day or half-day."
+                    "Please provide a start date, end date, and select full-day "
+                    "or half-day for each row."
                 )
                 break
 
@@ -601,11 +601,40 @@ def request_leave():
                 start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
                 end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
             except ValueError:
-                error = f"Row {idx}: invalid date format."
+                error = "Invalid date format."
                 break
 
             if end_date < start_date:
-                error = f"Row {idx}: end date cannot be before start date."
+                error = "End date cannot be before start date."
+                break
+
+            # 1) Block weekends / public holidays anywhere in the selected range
+            current = start_date
+            while current <= end_date:
+                if current.weekday() >= 5 or is_public_holiday(current):
+                    error = "You cannot book weekends or public holidays"
+                    break
+                current += timedelta(days=1)
+            if error:
+                break
+
+            # 2) Build list of working days (Mon–Fri excluding public holidays)
+            working_days = list(iterate_working_days(start_date, end_date))
+            if not working_days:
+                error = "Selected range does not contain any working days you can book."
+                break
+
+            # 3) Check for existing leave entries on any of those working days
+            existing = (
+                LeaveEntry.query
+                .filter(
+                    LeaveEntry.employee_id == employee.id,
+                    LeaveEntry.date.in_(working_days),
+                )
+                .first()
+            )
+            if existing:
+                error = "You already have this day booked"
                 break
 
             rows.append((start_date, end_date, code))
@@ -614,7 +643,7 @@ def request_leave():
             if not rows:
                 error = "Please add at least one date or range."
             else:
-                # Create one pending LeaveRequest per row
+                # Create one pending LeaveRequest per valid row
                 for start_date, end_date, code in rows:
                     lr = LeaveRequest(
                         employee_id=employee.id,
