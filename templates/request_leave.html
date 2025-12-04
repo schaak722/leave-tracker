@@ -24,22 +24,23 @@
   {% endif %}
 
   {% if not employee %}
-    <p class="text-muted">
-      Your account is not linked to an employee record, so you cannot request leave.
-      Please contact an administrator.
-    </p>
+    <div class="card">
+      <div class="card-body">
+        <p class="mb-0 small text-muted">
+          Your user account is not linked to an employee, so you cannot request leave.
+          Please contact an administrator.
+        </p>
+      </div>
+    </div>
   {% else %}
 
-    <!-- Summary card -->
+    <!-- Summary -->
     <div class="card mb-3">
-      <div class="card-body d-flex flex-wrap justify-content-between align-items-center">
-        <div>
-          <div class="fw-semibold">{{ employee.name }}</div>
-          <div class="text-muted small">Year {{ year }}</div>
-        </div>
-        <div class="d-flex gap-3 small">
+      <div class="card-body">
+        <h2 class="h6 mb-3">Your leave summary for {{ year }}</h2>
+        <div class="d-flex flex-wrap gap-4 small">
           <div>
-            <div class="text-muted">Entitled</div>
+            <div class="text-muted">Entitlement</div>
             <div class="fw-semibold">{{ "%.1f"|format(entitlement) }}</div>
           </div>
           <div>
@@ -58,11 +59,11 @@
     <div class="card mb-4">
       <div class="card-body">
         <h2 class="h6 mb-3">New leave request</h2>
-        <form method="post" action="{{ url_for('request_leave') }}">
-          <p class="small text-muted mb-2">
-            Add a range of dates or a single date, then optionally add more rows before submitting.
-          </p>
+        <p class="small text-muted mb-2">
+          Add a range of dates or a single date, then optionally add more rows before submitting.
+        </p>
 
+        <form method="post" action="{{ url_for('request_leave') }}">
           <div id="date-rows">
             <div class="row g-2 mb-2 date-row">
               <div class="col-md-4">
@@ -91,7 +92,7 @@
               </div>
               <div class="col-md-1 d-flex align-items-end">
                 <button type="button"
-                        class="btn btn-outline-danger btn-sm w-100 d-none remove-row-btn">
+                        class="btn btn-outline-danger btn-sm w-100 remove-row-btn d-none">
                   &times;
                 </button>
               </div>
@@ -149,7 +150,13 @@
                       {% endif %}
                     </td>
                     <td>
-                      {% if r.code == "F" %}Full-day{% elif r.code == "H" %}Half-day{% else %}{{ r.code }}{% endif %}
+                      {% if r.code == "F" %}
+                        Full-day
+                      {% elif r.code == "H" %}
+                        Half-day
+                      {% else %}
+                        {{ r.code }}
+                      {% endif %}
                     </td>
                     <td>
                       {% if r.status == "pending" %}
@@ -189,6 +196,7 @@
   {% endif %}
 
 </div>
+{% endblock %}
 
 {% block scripts %}
   {{ super() }}
@@ -196,7 +204,11 @@
     (function() {
       const container = document.getElementById('date-rows');
       const addBtn = document.getElementById('add-range-btn');
+
+      // If elements not present, or already initialised, do nothing
       if (!container || !addBtn) return;
+      if (container.dataset.initialised === '1') return;
+      container.dataset.initialised = '1';
 
       function updateRemoveButtons() {
         const rows = container.querySelectorAll('.date-row');
@@ -241,6 +253,4 @@
       updateRemoveButtons();
     })();
   </script>
-{% endblock %}
-
 {% endblock %}
