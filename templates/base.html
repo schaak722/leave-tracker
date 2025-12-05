@@ -25,15 +25,15 @@
       </div>
 <div class="app-nav-right">
   {% if g.user %}
+  {% if not g.is_employee %}
     <a href="{{ url_for('request_leave') }}" class="btn btn-outline-primary btn-sm me-2">
       Request leave
     </a>
-  
-  {% if g.is_admin or g.is_manager %}
-    <a href="{{ url_for('list_leave_requests') }}" class="btn btn-outline-secondary btn-sm me-2">
-      Leave requests
-      </a>
-    {% endif %}
+  {% endif %}
+  <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">
+    Logout
+  </a>
+{% endif %}
   
   {% if g.is_admin %}
     <a href="{{ url_for('manage_employees') }}" class="btn btn-outline-secondary btn-sm me-2">
