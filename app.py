@@ -1149,7 +1149,6 @@ def update_user(user_id):
             role = user.role
 
     # Optional employee linkage
-    employee_id = None
     if employee_id_str:
         try:
             employee_id = int(employee_id_str)
@@ -1162,6 +1161,29 @@ def update_user(user_id):
     if is_self:
         role = user.role
         active = user.active
+
+    # Prevent removing the last active admin
+    was_admin = (user.role == "admin" and user.active)
+    will_remove_admin = (role != "admin" or not active)
+
+    if was_admin and will_remove_admin:
+        other_admins = (
+            User.query
+            .filter(
+                User.id != user.id,
+                User.role == "admin",
+                User.active.is_(True),
+            )
+            .count()
+        )
+        if other_admins == 0:
+            # This is the last active admin; don't allow demotion/deactivation
+            return redirect(
+                url_for(
+                    "manage_users",
+                    error="You cannot remove the last active admin.",
+                )
+            )
 
     # Apply updates
     user.role = role
