@@ -32,18 +32,19 @@
    EMPLOYEE-ONLY SUMMARY CARDS
    ================================ #}
 {% if g.is_employee and g.user and g.user.employee %}
-  {# Find stats for the logged-in employee in per_employee list #}
-  {% set stats = None %}
+
+  {# Find this employee's stats from per_employee (list of dicts) #}
+  {% set ns = namespace(stats=None) %}
   {% for item in per_employee %}
     {% if item.employee.id == g.user.employee.id %}
-      {% set stats = item %}
+      {% set ns.stats = item %}
     {% endif %}
   {% endfor %}
 
-  {% if stats %}
-    {% set ent = stats.entitlement %}
-    {% set taken = stats.taken %}
-    {% set remaining = stats.remaining %}
+  {% if ns.stats %}
+    {% set ent = ns.stats.entitlement %}
+    {% set taken = ns.stats.taken %}
+    {% set remaining = ns.stats.remaining %}
 
     <div class="lt-summary-cards mb-4">
 
