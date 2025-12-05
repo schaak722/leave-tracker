@@ -28,6 +28,80 @@
   </div>
 </div>
 
+{# Employee-only summary cards #}
+{% if g.is_employee and g.user and g.user.employee %}
+  {% set stats = per_employee.get(g.user.employee.id) %}
+  {% if stats %}
+    {% set ent = stats["entitlement"] %}
+    {% set taken = stats["taken"] %}
+    {% set remaining = stats["remaining"] %}
+
+    <div class="lt-summary-cards mb-3">
+      <!-- Leave Days -->
+      <div class="lt-summary-card lt-summary-card-leave">
+        <div class="lt-summary-card-main">
+          <div class="lt-summary-circle">
+            <div class="lt-summary-number">
+              {{ "%.1f"|format(ent) }}
+            </div>
+            <div class="lt-summary-label-small">
+              DAYS
+            </div>
+          </div>
+          <div class="lt-summary-title">
+            Leave Days
+          </div>
+        </div>
+      </div>
+
+      <!-- Taken -->
+      <div class="lt-summary-card lt-summary-card-taken">
+        <div class="lt-summary-card-main">
+          <div class="lt-summary-circle">
+            <div class="lt-summary-number">
+              {{ "%.1f"|format(taken) }}
+            </div>
+            <div class="lt-summary-label-small">
+              DAYS
+            </div>
+          </div>
+          <div class="lt-summary-title">
+            Taken
+          </div>
+        </div>
+        <div class="lt-summary-actions">
+          <a href="{{ url_for('employee_summary', employee_id=g.user.employee.id, year=year) }}"
+             class="btn btn-outline-light btn-sm">
+            View
+          </a>
+        </div>
+      </div>
+
+      <!-- Remaining -->
+      <div class="lt-summary-card lt-summary-card-remaining">
+        <div class="lt-summary-card-main">
+          <div class="lt-summary-circle">
+            <div class="lt-summary-number">
+              {{ "%.1f"|format(remaining) }}
+            </div>
+            <div class="lt-summary-label-small">
+              DAYS
+            </div>
+          </div>
+          <div class="lt-summary-title">
+            Remaining
+          </div>
+        </div>
+        <div class="lt-summary-actions">
+          <a href="{{ url_for('request_leave') }}"
+             class="btn btn-outline-light btn-sm">
+            Request leave
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
 
 <!-- Summary table -->
 <div class="mb-4 summary-wrapper">
