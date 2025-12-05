@@ -539,7 +539,10 @@ a.btn-link:hover {
   }
 }
 
-/* Employee summary cards on calendar page */
+/* ===========================
+   Employee summary cards on calendar page
+   =========================== */
+
 .lt-summary-cards {
   display: flex;
   flex-wrap: wrap;
@@ -630,4 +633,3 @@ a.btn-link:hover {
     flex: 1 1 100%;
   }
 }
-
