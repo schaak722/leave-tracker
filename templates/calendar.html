@@ -1,340 +1,162 @@
 {% extends "base.html" %}
 
+{% block title %}Calendar - Leave Tracker{% endblock %}
+
 {% block content %}
-<div class="d-flex align-items-center mb-3 calendar-header">
-  <div class="d-flex align-items-center">
-    <div class="kmp-calendar-subtitle me-2">
-      Leave Tracker
-    </div>
 
-    <div class="dropdown">
-	<button class="btn btn-outline-primary btn-sm year-dropdown-toggle dropdown-toggle"
-        	type="button"
-        	data-bs-toggle="dropdown"
-       	 	aria-expanded="false">
- 		{{ year }}
-	</button>
-      <ul class="dropdown-menu year-dropdown-menu">
-        {% for y in years %}
-          <li>
-            <a class="dropdown-item {% if y == year %}active{% endif %}"
-               href="{{ url_for('calendar_view', year=y) }}">
-              {{ y }}
-            </a>
-          </li>
-        {% endfor %}
-      </ul>
+<div class="container py-3">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Calendar - {{ year }}</h1>
+    <div>
+      <a href="{{ url_for('index', year=year-1) }}" class="btn btn-outline-secondary btn-sm">&laquo; {{ year-1 }}</a>
+      <a href="{{ url_for('index', year=year+1) }}" class="btn btn-outline-secondary btn-sm">{{ year+1 }} &raquo;</a>
     </div>
   </div>
-</div>
 
-{# Employee-only summary cards #}
-{% if g.is_employee and g.user and g.user.employee %}
-  {% set stats = per_employee.get(g.user.employee.id) %}
-  {% if stats %}
-    {% set ent = stats["entitlement"] %}
-    {% set taken = stats["taken"] %}
-    {% set remaining = stats["remaining"] %}
+  {# ============================================
+     EMPLOYEE-ONLY SUMMARY CARDS (NEW)
+     ============================================ #}
+  {% if g.is_employee and g.user and g.user.employee %}
+    {% set stats = per_employee.get(g.user.employee.id) %}
+    {% if stats %}
+      {% set ent = stats["entitlement"] %}
+      {% set taken = stats["taken"] %}
+      {% set remaining = stats["remaining"] %}
 
-    <div class="lt-summary-cards mb-3">
-      <!-- Leave Days -->
-      <div class="lt-summary-card lt-summary-card-leave">
-        <div class="lt-summary-card-main">
-          <div class="lt-summary-circle">
-            <div class="lt-summary-number">
-              {{ "%.1f"|format(ent) }}
+      <div class="lt-summary-cards mb-3">
+
+        <!-- Leave Days -->
+        <div class="lt-summary-card lt-summary-card-leave">
+          <div class="lt-summary-card-main">
+            <div class="lt-summary-circle">
+              <div class="lt-summary-number">{{ "%.1f"|format(ent) }}</div>
+              <div class="lt-summary-label-small">DAYS</div>
             </div>
-            <div class="lt-summary-label-small">
-              DAYS
-            </div>
-          </div>
-          <div class="lt-summary-title">
-            Leave Days
+            <div class="lt-summary-title">Leave Days</div>
           </div>
         </div>
+
+        <!-- Taken -->
+        <div class="lt-summary-card lt-summary-card-taken">
+          <div class="lt-summary-card-main">
+            <div class="lt-summary-circle">
+              <div class="lt-summary-number">{{ "%.1f"|format(taken) }}</div>
+              <div class="lt-summary-label-small">DAYS</div>
+            </div>
+            <div class="lt-summary-title">Taken</div>
+          </div>
+          <div class="lt-summary-actions">
+            <a href="{{ url_for('employee_summary', employee_id=g.user.employee.id, year=year) }}"
+               class="btn btn-outline-light btn-sm">View</a>
+          </div>
+        </div>
+
+        <!-- Remaining -->
+        <div class="lt-summary-card lt-summary-card-remaining">
+          <div class="lt-summary-card-main">
+            <div class="lt-summary-circle">
+              <div class="lt-summary-number">{{ "%.1f"|format(remaining) }}</div>
+              <div class="lt-summary-label-small">DAYS</div>
+            </div>
+            <div class="lt-summary-title">Remaining</div>
+          </div>
+          <div class="lt-summary-actions">
+            <a href="{{ url_for('request_leave') }}"
+               class="btn btn-outline-light btn-sm">Request leave</a>
+          </div>
+        </div>
+
       </div>
-
-      <!-- Taken -->
-      <div class="lt-summary-card lt-summary-card-taken">
-        <div class="lt-summary-card-main">
-          <div class="lt-summary-circle">
-            <div class="lt-summary-number">
-              {{ "%.1f"|format(taken) }}
-            </div>
-            <div class="lt-summary-label-small">
-              DAYS
-            </div>
-          </div>
-          <div class="lt-summary-title">
-            Taken
-          </div>
-        </div>
-        <div class="lt-summary-actions">
-          <a href="{{ url_for('employee_summary', employee_id=g.user.employee.id, year=year) }}"
-             class="btn btn-outline-light btn-sm">
-            View
-          </a>
-        </div>
-      </div>
-
-      <!-- Remaining -->
-      <div class="lt-summary-card lt-summary-card-remaining">
-        <div class="lt-summary-card-main">
-          <div class="lt-summary-circle">
-            <div class="lt-summary-number">
-              {{ "%.1f"|format(remaining) }}
-            </div>
-            <div class="lt-summary-label-small">
-              DAYS
-            </div>
-          </div>
-          <div class="lt-summary-title">
-            Remaining
-          </div>
-        </div>
-        <div class="lt-summary-actions">
-          <a href="{{ url_for('request_leave') }}"
-             class="btn btn-outline-light btn-sm">
-            Request leave
-          </a>
-        </div>
-      </div>
-    </div>
+    {% endif %}
   {% endif %}
-{% endif %}
 
-<!-- Summary table -->
-<div class="mb-4 summary-wrapper">
-  <h5>Summary</h5>
-  <table class="table table-sm table-bordered summary-table w-auto">
-    <thead class="table-light">
-    <tr>
-      <th>Employee</th>
-      <th>Leave Days</th>
-      <th>Taken</th>
-      <th>Remaining</th>
-      <th></th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for item in per_employee %}
-      <tr class="summary-row" data-employee-id="{{ item.employee.id }}">
-        <td>{{ item.employee.name }}</td>
-        <td class="summary-entitlement">{{ "%.1f"|format(item.entitlement) }}</td>
-        <td class="summary-taken">{{ "%.1f"|format(item.taken) }}</td>
-        <td class="summary-remaining">{{ "%.1f"|format(item.remaining) }}</td>
-        <td>
-          <a class="btn btn-sm btn-outline-secondary"
-             href="{{ url_for('employee_summary',
-                               employee_id=item.employee.id,
-                               year=year) }}">
-            View
-          </a>
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</div>
 
-<!-- Legend -->
-<div class="calendar-legend card mb-4">
-  <div class="card-body d-flex flex-wrap align-items-center gap-3">
-    <div class="legend-item">
-      <span class="legend-swatch legend-swatch-weekend"></span>
-      <span>Weekend</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-swatch legend-swatch-holiday"></span>
-      <span>Public holiday</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-swatch legend-swatch-birthday"></span>
-      <span>Birthday</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-badge legend-badge-f">F</span>
-      <span>Full-day leave</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-badge legend-badge-h">H</span>
-      <span>Half-day leave</span>
+  {# ============================================
+     ADMIN / MANAGER SUMMARY GRID (HIDDEN FROM EMPLOYEES)
+     ============================================ #}
+  {% if not g.is_employee %}
+  <div class="card mb-3">
+    <div class="card-body">
+      <h2 class="h6 mb-3">Summary</h2>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Entitlement</th>
+              <th>Taken</th>
+              <th>Remaining</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for employee in employees %}
+              <tr>
+                <td>{{ employee.name }}</td>
+                <td>{{ "%.1f"|format(per_employee[employee.id]["entitlement"]) }}</td>
+                <td>{{ "%.1f"|format(per_employee[employee.id]["taken"]) }}</td>
+                <td>{{ "%.1f"|format(per_employee[employee.id]["remaining"]) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
-</div>
+  {% endif %}
 
-<!-- Monthly blocks -->
-{% for m in month_data %}
-  <div class="month-block">
-    <div class="table-responsive">
-      <table class="table table-bordered table-sm align-middle mb-0 leave-table">
-        <thead class="table-light">
-        <!-- Month name + weekday letters row -->
-        <tr class="weekday-header">
-          <th class="month-name-cell">
-            {{ m.month_name }}
-          </th>
-          {% for letter in m.weekday_letters %}
-            {% set is_weekend = (letter == "S") %}
-            <th class="text-center day-col {% if is_weekend %}weekend-col{% endif %}">
-              {{ letter }}
-            </th>
-          {% endfor %}
-        </tr>
-        <!-- Day numbers row -->
-        <tr class="day-number-header">
-          <th></th>  {# no "Employee" label here #}
-          {% for day in m.days %}
-            {% set letter = m.weekday_letters[loop.index0] %}
-            {% set is_weekend = (letter == "S") %}
-            <th class="text-center day-col {% if is_weekend %}weekend-col{% endif %}">
-              {{ day }}
-            </th>
-          {% endfor %}
-        </tr>
-        </thead>
-        <tbody>
-        {% for emp in employees %}
+
+  {# ============================================
+     CALENDAR TABLE
+     ============================================ #}
+  <div class="card">
+    <div class="card-body table-responsive">
+      <table class="table table-bordered calendar-table mb-0">
+        <thead>
           <tr>
-            <td>{{ emp.name }}</td>
-            {% for day in m.days %}
-              {% set date_str = "%04d-%02d-%02d"|format(year, m.month_number, day) %}
-              {% set key = emp.id|string ~ "_" ~ date_str %}
-              {% set code = cell_codes.get(key, "") %}
-              {% set weekday_letter = m.weekday_letters[loop.index0] %}
-              {% set is_weekend = (weekday_letter == "S") %}
-              {% set is_holiday = date_str in public_holiday_dates %}
-              {% set is_birthday = emp.birthday and
-                                   emp.birthday.month == m.month_number and
-                                   emp.birthday.day == day %}
-              {% set locked = is_weekend or is_holiday %}
-              <td class="leave-cell
-                         {% if not g.is_admin %} readonly{% endif %}
-                         {% if is_weekend %} weekend-cell{% endif %}
-                         {% if is_holiday %} holiday-cell{% endif %}
-                         {% if is_birthday %} birthday-cell{% endif %}"
-                  data-employee-id="{{ emp.id }}"
-                  data-date="{{ date_str }}"
-                  data-weekend="{{ 1 if is_weekend else 0 }}"
-                  data-holiday="{{ 1 if is_holiday else 0 }}"
-                  data-birthday="{{ 1 if is_birthday else 0 }}"
-                  data-locked="{{ 1 if locked else 0 }}">
-                {{ code }}
-              </td>
+            <th class="calendar-header">Employee</th>
+            {% for month_name, month_days in months %}
+              <th class="calendar-header" colspan="{{ month_days|length }}">{{ month_name }}</th>
             {% endfor %}
           </tr>
-        {% endfor %}
+
+          <tr>
+            <th></th>
+            {% for month_name, month_days in months %}
+              {% for day in month_days %}
+                <th class="calendar-day">{{ day.day }}</th>
+              {% endfor %}
+            {% endfor %}
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for employee in employees %}
+            <tr>
+              <th class="employee-name">{{ employee.name }}</th>
+              {% for month_name, month_days in months %}
+                {% for day in month_days %}
+                  {% set key = employee.id ~ "_" ~ day.isoformat() %}
+                  {% set code = cell_codes.get(key) %}
+                  <td class="calendar-cell
+                             {% if code == 'F' %}cell-full{% endif %}
+                             {% if code == 'H' %}cell-half{% endif %}
+                             {% if day.weekday() >= 5 %}cell-weekend{% endif %}
+                             {% if is_public_holiday(day) %}cell-holiday{% endif %}"
+                      data-employee-id="{{ employee.id }}"
+                      data-date="{{ day.isoformat() }}">
+                    {{ code or "" }}
+                  </td>
+                {% endfor %}
+              {% endfor %}
+            </tr>
+          {% endfor %}
         </tbody>
+
       </table>
     </div>
   </div>
-{% endfor %}
-{% endblock %}
 
-{% block scripts %}
-{{ super() }}
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const cells = document.querySelectorAll("td.leave-cell");
+</div>
 
-  function applyWeekendStyle(cell) {
-    const isWeekend = cell.dataset.weekend === "1";
-    if (!isWeekend) return;
-    const val = cell.textContent.trim();
-    if (val === "F" || val === "H") {
-      cell.classList.add("weekend-occupied");
-    } else {
-      cell.classList.remove("weekend-occupied");
-    }
-  }
-
-  function codeToValue(code) {
-    if (code === "F") return 1.0;
-    if (code === "H") return 0.5;
-    return 0.0;
-  }
-
-  function updateSummary(empId, oldCode, newCode) {
-    const row = document.querySelector(
-      'tr.summary-row[data-employee-id="' + empId + '"]'
-    );
-    if (!row) return;
-
-    const entCell = row.querySelector(".summary-entitlement");
-    const takenCell = row.querySelector(".summary-taken");
-    const remCell = row.querySelector(".summary-remaining");
-
-    if (!entCell || !takenCell || !remCell) return;
-
-    const entitlement = parseFloat(entCell.textContent) || 0.0;
-    let taken = parseFloat(takenCell.textContent) || 0.0;
-
-    const oldVal = codeToValue(oldCode);
-    const newVal = codeToValue(newCode);
-    const delta = newVal - oldVal;
-
-    taken = taken + delta;
-    const remaining = entitlement - taken;
-
-    takenCell.textContent = taken.toFixed(1);
-    remCell.textContent = remaining.toFixed(1);
-  }
-
-  cells.forEach(cell => {
-    const locked = cell.dataset.locked === "1";
-
-    // Initial styling for weekends
-    applyWeekendStyle(cell);
-
-    {% if g.is_admin %}
-    // Only admins can click, and not on locked cells
-    if (!locked) {
-      cell.addEventListener("click", function () {
-        const empId = cell.dataset.employeeId;
-        const dateStr = cell.dataset.date;
-        const current = cell.textContent.trim();
-
-        let next = "";
-        if (current === "") {
-          next = "F";
-        } else if (current === "F") {
-          next = "H";
-        } else if (current === "H") {
-          next = "";
-        }
-
-        fetch("{{ url_for('update_cell') }}", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            employee_id: empId,
-            date: dateStr,
-            code: next
-          })
-        }).then(resp => resp.json())
-          .then(data => {
-            if (data.success) {
-              const oldCode = current;
-              cell.textContent = next;
-              applyWeekendStyle(cell);
-              updateSummary(empId, oldCode, next);
-            } else {
-              alert("Error saving cell: " + (data.error || "Unknown error"));
-            }
-          })
-          .catch(err => {
-            console.error(err);
-            alert("Network error saving cell");
-          });
-      });
-    } else {
-      // Locked cells shouldn't look clickable
-      cell.style.cursor = "default";
-    }
-    {% endif %}
-  });
-});
-</script>
 {% endblock %}
