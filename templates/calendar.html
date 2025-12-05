@@ -93,9 +93,9 @@
             {% for employee in employees %}
               <tr>
                 <td>{{ employee.name }}</td>
-                <td>{{ "%.1f"|format(per_employee[employee.id]["entitlement"]) }}</td>
-                <td>{{ "%.1f"|format(per_employee[employee.id]["taken"]) }}</td>
-                <td>{{ "%.1f"|format(per_employee[employee.id]["remaining"]) }}</td>
+                td>{{ "%.1f"|format(per_employee[loop.index0]["entitlement"]) }}</td>
+                <td>{{ "%.1f"|format(per_employee[loop.index0]["taken"]) }}</td>
+                <td>{{ "%.1f"|format(per_employee[loop.index0]["remaining"]) }}</td>
               </tr>
             {% endfor %}
           </tbody>
