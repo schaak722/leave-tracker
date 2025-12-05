@@ -565,12 +565,22 @@ a.btn-link:hover {
   background-color: #890a97; /* Leave Days */
 }
 
+/* Softer modern colours */
 .lt-summary-card-taken {
-  background-color: #ff0000; /* Taken */
+  background-color: #FF3B30;
+}
+.lt-summary-card-remaining {
+  background-color: #34C759;
 }
 
-.lt-summary-card-remaining {
-  background-color: #1fc600; /* Remaining */
+.lt-summary-card-taken .lt-summary-number,
+.lt-summary-card-taken .lt-summary-label-small {
+  color: #FF3B30;
+}
+
+.lt-summary-card-remaining .lt-summary-number,
+.lt-summary-card-remaining .lt-summary-label-small {
+  color: #34C759;
 }
 
 .lt-summary-card-main {
