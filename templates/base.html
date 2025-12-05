@@ -23,18 +23,29 @@
                class="kmp-logo">
         </a>
       </div>
+
 <div class="app-nav-right">
   {% if g.user %}
-  {% if not g.is_employee %}
-    <a href="{{ url_for('request_leave') }}" class="btn btn-outline-primary btn-sm me-2">
-      Request leave
+    {# Logged-in state #}
+    {% if not g.is_employee %}
+      <a href="{{ url_for('request_leave') }}"
+         class="btn btn-outline-primary btn-sm me-2">
+        Request leave
+      </a>
+    {% endif %}
+    <a href="{{ url_for('logout') }}"
+       class="btn btn-outline-danger btn-sm">
+      Logout
+    </a>
+  {% else %}
+    {# Logged-out state #}
+    <a href="{{ url_for('login') }}"
+       class="btn btn-outline-primary btn-sm">
+      Login
     </a>
   {% endif %}
-  <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">
-    Logout
-  </a>
-{% endif %}
-  
+  </div>
+      
   {% if g.is_admin %}
     <a href="{{ url_for('manage_employees') }}" class="btn btn-outline-secondary btn-sm me-2">
       Manage Employees
