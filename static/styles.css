@@ -562,25 +562,25 @@ a.btn-link:hover {
 }
 
 .lt-summary-card-leave {
-  background-color: #890a97; /* Leave Days */
+  background-color: #9B59B6; /* Leave Days */
 }
 
 /* Softer modern colours */
 .lt-summary-card-taken {
-  background-color: #FF3B30;
+  background-color: #E57373;
 }
 .lt-summary-card-remaining {
-  background-color: #34C759;
+  background-color: #66BB6A;
 }
 
 .lt-summary-card-taken .lt-summary-number,
 .lt-summary-card-taken .lt-summary-label-small {
-  color: #FF3B30;
+  color: #E57373;
 }
 
 .lt-summary-card-remaining .lt-summary-number,
 .lt-summary-card-remaining .lt-summary-label-small {
-  color: #34C759;
+  color: #66BB6A;
 }
 
 .lt-summary-card-main {
@@ -614,7 +614,7 @@ a.btn-link:hover {
 
 .lt-summary-card-leave .lt-summary-number,
 .lt-summary-card-leave .lt-summary-label-small {
-  color: #890a97;
+  color: #9B59B6;
 }
 
 .lt-summary-card-taken .lt-summary-number,
