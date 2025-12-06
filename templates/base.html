@@ -22,8 +22,8 @@
   <nav class="app-nav">
     <div class="nav-inner d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center gap-2">
-        <a href="{{ url_for('calendar_view') if g.user else url_for('login') }}"
-           class="kmp-nav-logo-link">
+       <a href="{{ url_for('index') if g.user else url_for('login') }}"
+            class="kmp-nav-logo-link">
           <span class="kmp-calendar-subtitle">Leave Tracker</span>
         </a>
       </div>
