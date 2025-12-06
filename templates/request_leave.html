@@ -38,18 +38,39 @@
     <div class="card mb-3">
       <div class="card-body">
         <h2 class="h6 mb-3">Your leave summary for {{ year }}</h2>
-        <div class="d-flex flex-wrap gap-4 small">
-          <div>
-            <div class="text-muted">Entitlement</div>
-            <div class="fw-semibold">{{ "%.1f"|format(entitlement) }}</div>
+
+        <div class="lt-summary-cards mb-0">
+          <!-- Leave Days -->
+          <div class="lt-summary-card lt-summary-card-leave">
+            <div class="lt-summary-card-main">
+              <div class="lt-summary-circle">
+                <div class="lt-summary-number">{{ entitlement | round(1) }}</div>
+                <div class="lt-summary-label-small">DAYS</div>
+              </div>
+              <div class="lt-summary-title">Leave Days</div>
+            </div>
           </div>
-          <div>
-            <div class="text-muted">Taken</div>
-            <div class="fw-semibold">{{ "%.1f"|format(taken) }}</div>
+
+          <!-- Taken -->
+          <div class="lt-summary-card lt-summary-card-taken">
+            <div class="lt-summary-card-main">
+              <div class="lt-summary-circle">
+                <div class="lt-summary-number">{{ taken | round(1) }}</div>
+                <div class="lt-summary-label-small">DAYS</div>
+              </div>
+              <div class="lt-summary-title">Taken</div>
+            </div>
           </div>
-          <div>
-            <div class="text-muted">Remaining</div>
-            <div class="fw-semibold">{{ "%.1f"|format(remaining) }}</div>
+
+          <!-- Remaining -->
+          <div class="lt-summary-card lt-summary-card-remaining">
+            <div class="lt-summary-card-main">
+              <div class="lt-summary-circle">
+                <div class="lt-summary-number">{{ remaining | round(1) }}</div>
+                <div class="lt-summary-label-small">DAYS</div>
+              </div>
+              <div class="lt-summary-title">Remaining</div>
+            </div>
           </div>
         </div>
       </div>
