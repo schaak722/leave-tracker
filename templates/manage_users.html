@@ -17,31 +17,52 @@
   </div>
 {% endif %}
 
-<div class="row">
-  <div class="col-md-5 mb-3">
+{# Create new user – smaller card at the top #}
+<div class="row mb-4">
+  <div class="col-md-6 col-lg-5">
     <div class="card shadow-sm-sm">
       <div class="card-body">
         <h2 class="h6 mb-3">Create new user</h2>
         <form method="post" action="{{ url_for('create_user') }}">
           <div class="mb-2">
-            <label class="form-label form-label-sm" for="username">Email (used as username)</label>
-            <input type="text" name="username" id="username" class="form-control form-control-sm" required>
+            <label class="form-label form-label-sm" for="username">
+              Email (used as username)
+            </label>
+            <input type="text"
+                   name="username"
+                   id="username"
+                   class="form-control form-control-sm"
+                   required>
           </div>
           <div class="mb-2">
-            <label class="form-label form-label-sm" for="password">Password</label>
-            <input type="password" name="password" id="password" class="form-control form-control-sm" required>
+            <label class="form-label form-label-sm" for="password">
+              Password
+            </label>
+            <input type="password"
+                   name="password"
+                   id="password"
+                   class="form-control form-control-sm"
+                   required>
           </div>
           <div class="mb-2">
-            <label class="form-label form-label-sm" for="role">Role</label>
-            <select name="role" id="role" class="form-select form-select-sm">
+            <label class="form-label form-label-sm" for="role">
+              Role
+            </label>
+            <select name="role"
+                    id="role"
+                    class="form-select form-select-sm">
               <option value="employee" selected>Employee</option>
               <option value="manager">Manager</option>
               <option value="admin">Admin</option>
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label form-label-sm" for="employee_id">Linked employee (optional)</label>
-            <select name="employee_id" id="employee_id" class="form-select form-select-sm">
+            <label class="form-label form-label-sm" for="employee_id">
+              Linked employee (optional)
+            </label>
+            <select name="employee_id"
+                    id="employee_id"
+                    class="form-select form-select-sm">
               <option value="">-- None --</option>
               {% for e in employees %}
                 <option value="{{ e.id }}">{{ e.name }}</option>
@@ -55,11 +76,15 @@
       </div>
     </div>
   </div>
+</div>
 
-  <div class="col-md-7 mb-3">
+{# Existing users – full-width table underneath #}
+<div class="row">
+  <div class="col-12">
     <div class="card shadow-sm-sm">
       <div class="card-body">
         <h2 class="h6 mb-3">Existing users</h2>
+
         {% if users %}
           <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
@@ -76,7 +101,8 @@
               <tbody>
                 {% for u in users %}
                   <tr>
-                    <form method="post" action="{{ url_for('update_user', user_id=u.id) }}">
+                    <form method="post"
+                          action="{{ url_for('update_user', user_id=u.id) }}">
                       <td>
                         {{ u.username }}
                         {% if g.user and g.user.id == u.id %}
@@ -84,26 +110,32 @@
                         {% endif %}
                       </td>
                       <td>
-                        <select name="role" class="form-select form-select-sm"
+                        <select name="role"
+                                class="form-select form-select-sm"
                                 {% if g.user and g.user.id == u.id %}disabled{% endif %}>
-                          <option value="employee" {% if u.role == "employee" or u.role == "user" %}selected{% endif %}>
+                          <option value="employee"
+                                  {% if u.role == "employee" or u.role == "user" %}selected{% endif %}>
                             Employee
                           </option>
-                          <option value="manager" {% if u.role == "manager" %}selected{% endif %}>
+                          <option value="manager"
+                                  {% if u.role == "manager" %}selected{% endif %}>
                             Manager
                           </option>
-                          <option value="admin" {% if u.role == "admin" %}selected{% endif %}>
+                          <option value="admin"
+                                  {% if u.role == "admin" %}selected{% endif %}>
                             Admin
                           </option>
                         </select>
                       </td>
                       <td class="text-center">
-                        <input type="checkbox" name="active"
+                        <input type="checkbox"
+                               name="active"
                                {% if u.active %}checked{% endif %}
                                {% if g.user and g.user.id == u.id %}disabled{% endif %}>
                       </td>
                       <td>
-                        <select name="employee_id" class="form-select form-select-sm">
+                        <select name="employee_id"
+                                class="form-select form-select-sm">
                           <option value="">-- None --</option>
                           {% for e in employees %}
                             <option value="{{ e.id }}"
@@ -114,7 +146,8 @@
                         </select>
                       </td>
                       <td>
-                        <input type="password" name="password"
+                        <input type="password"
+                               name="password"
                                class="form-control form-control-sm"
                                placeholder="New password (optional)">
                       </td>
