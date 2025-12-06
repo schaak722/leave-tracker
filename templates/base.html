@@ -21,28 +21,68 @@
   <!-- Top navigation -->
   <nav class="app-nav">
     <div class="nav-inner d-flex justify-content-between align-items-center">
-     <div class="d-flex align-items-center gap-2">
-  <a href="{{ url_for('index') if g.user else url_for('login') }}"
-     class="kmp-nav-logo-link">
-    <img src="{{ url_for('static', filename='kmp_logo.png') }}"
-         alt="Keepmeposted"
-         class="kmp-logo me-2">
-  </a>
-</div>
 
-      <div class="app-nav-right">
+      <!-- Left side: logo only -->
+      <div class="d-flex align-items-center">
+        <a href="{{ url_for('index') if g.user else url_for('login') }}"
+           class="kmp-nav-logo-link">
+          <img src="{{ url_for('static', filename='kmp_logo.png') }}"
+               alt="Keepmeposted"
+               class="kmp-logo me-2">
+        </a>
+      </div>
+
+      <!-- Right side: role-based actions -->
+      <div class="app-nav-right d-flex align-items-center gap-2">
         {% if g.user %}
-          {# Logged-in state #}
-          {% if not g.is_employee %}
+
+          {# ADMIN: Leave requests · Manage users · Manage employees · Logout #}
+          {% if g.is_admin %}
+            <a href="{{ url_for('list_leave_requests') }}"
+               class="btn btn-outline-secondary btn-sm">
+              Leave requests
+            </a>
+
+            <a href="{{ url_for('manage_users') }}"
+               class="btn btn-outline-secondary btn-sm">
+              Manage users
+            </a>
+
+            <a href="{{ url_for('manage_employees') }}"
+               class="btn btn-outline-secondary btn-sm">
+              Manage employees
+            </a>
+
+            <a href="{{ url_for('logout') }}"
+               class="btn btn-outline-danger btn-sm">
+              Logout
+            </a>
+
+          {# MANAGER: Request leave · Leave requests · Logout #}
+          {% elif g.is_manager %}
             <a href="{{ url_for('request_leave') }}"
-               class="btn btn-outline-primary btn-sm me-2">
+               class="btn btn-outline-primary btn-sm">
               Request leave
             </a>
+
+            <a href="{{ url_for('list_leave_requests') }}"
+               class="btn btn-outline-secondary btn-sm">
+              Leave requests
+            </a>
+
+            <a href="{{ url_for('logout') }}"
+               class="btn btn-outline-danger btn-sm">
+              Logout
+            </a>
+
+          {# EMPLOYEE: Logout only (request leave stays in the green card) #}
+          {% else %}
+            <a href="{{ url_for('logout') }}"
+               class="btn btn-outline-danger btn-sm">
+              Logout
+            </a>
           {% endif %}
-          <a href="{{ url_for('logout') }}"
-             class="btn btn-outline-danger btn-sm">
-            Logout
-          </a>
+
         {% else %}
           {# Logged-out state #}
           <a href="{{ url_for('login') }}"
