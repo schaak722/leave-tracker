@@ -103,12 +103,19 @@
                   <tr>
                     <form method="post"
                           action="{{ url_for('update_user', user_id=u.id) }}">
-                      <td>
-                        {{ u.username }}
-                        {% if g.user and g.user.id == u.id %}
-                          <span class="badge bg-secondary ms-1">You</span>
-                        {% endif %}
-                      </td>
+                      <td class="align-middle">
+                       <div class="d-flex align-items-center gap-1">
+                      <input type="email"
+                      name="username"
+                      class="form-control form-control-sm"
+               value="{{ u.username }}"
+           required>
+    {% if g.user and g.user.id == u.id %}
+      <span class="badge bg-secondary">You</span>
+    {% endif %}
+  </div>
+</td>
+
                       <td>
                         <select name="role"
                                 class="form-select form-select-sm"
