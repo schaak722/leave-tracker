@@ -709,11 +709,12 @@ def request_leave():
                     employee = employee_user.employee if hasattr(employee_user, "employee") and employee_user.employee else None
                     employee_email = getattr(employee_user, "username", None)
 
-                    managers_and_admins = User.query.filter(
+                    # Only notify managers (not admins)
+                    managers = User.query.filter(
                         User.active.is_(True),
-                        User.role.in_(["manager", "admin"])
+                        User.role == "manager",
                     ).all()
-                    recipient_emails = [u.username for u in managers_and_admins if u.username]
+                    recipient_emails = [u.username for u in managers if u.username]
                 except Exception:
                     employee = None
                     employee_email = None
