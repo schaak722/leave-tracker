@@ -1,1 +1,8 @@
+Your leave request has been {{ decision }}
 
+Hi {{ employee.name }},
+
+Your leave request has been {{ decision }} by {{ manager_name }}.
+
+You can log in to Leave Tracker for more details:
+{{ calendar_url }}
