@@ -3,6 +3,10 @@ import calendar
 import os
 from collections import defaultdict
 
+import smtplib
+from email.message import EmailMessage
+
+
 from flask import (
     Flask, render_template, request, redirect,
     url_for, session, g, jsonify, abort
@@ -21,6 +25,14 @@ app = Flask(__name__)
 
 # Load from config.py
 app.config["SECRET_KEY"] = config.SECRET_KEY
+
+# Optional email settings (can be left unset in development)
+app.config["MAIL_SERVER"] = config.MAIL_SERVER
+app.config["MAIL_PORT"] = config.MAIL_PORT
+app.config["MAIL_USE_TLS"] = config.MAIL_USE_TLS
+app.config["MAIL_USERNAME"] = config.MAIL_USERNAME
+app.config["MAIL_PASSWORD"] = config.MAIL_PASSWORD
+app.config["MAIL_DEFAULT_SENDER"] = config.MAIL_DEFAULT_SENDER
 
 # Prefer DATABASE_URL (Postgres in production), fall back to SQLite locally
 database_url = os.environ.get("DATABASE_URL")
@@ -45,6 +57,40 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 
 db = SQLAlchemy(app)
+
+def send_email(subject, recipients, body_text, body_html=None, reply_to=None):
+    """Best-effort email sender used for leave request notifications."""
+    server_host = app.config.get("MAIL_SERVER")
+    server_port = app.config.get("MAIL_PORT", 587)
+    use_tls = app.config.get("MAIL_USE_TLS", True)
+    username = app.config.get("MAIL_USERNAME")
+    password = app.config.get("MAIL_PASSWORD")
+    sender = app.config.get("MAIL_DEFAULT_SENDER") or username
+
+    # If email is not configured, quietly skip
+    if not server_host or not username or not password or not recipients:
+        app.logger.warning("Email not configured or missing recipients; skipping send_email()")
+        return
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = sender
+    msg["To"] = ", ".join(recipients)
+    if reply_to:
+        msg["Reply-To"] = reply_to
+
+    msg.set_content(body_text)
+    if body_html:
+        msg.add_alternative(body_html, subtype="html")
+
+    try:
+        with smtplib.SMTP(server_host, server_port) as server:
+            if use_tls:
+                server.starttls()
+            server.login(username, password)
+            server.send_message(msg)
+    except Exception as e:
+        app.logger.exception("Failed to send email: %s", e)
 
 # Admin login from config.py (used only for bootstrapping the first admin user)
 ADMIN_USERNAME = config.ADMIN_USERNAME
