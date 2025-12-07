@@ -1275,6 +1275,7 @@ def update_user(user_id):
     is_self = g.user is not None and g.user.id == user.id
 
     # Basic fields from the form
+    username_raw = (request.form.get("username") or "").strip()
     role = (request.form.get("role") or user.role).strip()
     active = True if request.form.get("active") == "on" else False
     new_password = request.form.get("password") or ""
@@ -1326,6 +1327,9 @@ def update_user(user_id):
             )
 
     # Apply updates
+    if username_raw:
+        user.username = username_raw  # update email/username
+
     user.role = role
     user.active = active
     user.employee_id = employee_id
@@ -1336,6 +1340,7 @@ def update_user(user_id):
     db.session.commit()
 
     return redirect(url_for("manage_users"))
+
 
 # ---------------------------
 # Run (for local development)
