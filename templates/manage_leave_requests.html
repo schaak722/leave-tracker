@@ -89,31 +89,30 @@
                     {{ r.created_at.strftime("%d %b %Y") if r.created_at else "" }}
                   </td>
                   <td>
-                    {% if r.status == "pending" %}
-                      <form method="post"
-                            action="{{ url_for('decide_leave_request', request_id=r.id) }}"
-                            class="d-flex flex-column flex-sm-row gap-1">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="action" value="approve">
-                        <input type="hidden" name="manager_comment" value="">
-                        <button type="submit" class="btn btn-success btn-sm">
-                          Approve
-                        </button>
-                      </form>
-                      <form method="post"
-                            action="{{ url_for('decide_leave_request', request_id=r.id) }}"
-                            class="d-flex flex-column flex-sm-row gap-1 mt-1">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="action" value="reject">
-                        <input type="hidden" name="manager_comment" value="">
-                        <button type="submit" class="btn btn-danger btn-sm">
-                          Reject
-                        </button>
-                      </form>
-                    {% else %}
-                      <span class="text-muted small">No actions available</span>
-                    {% endif %}
-                  </td>
+  {% if r.status == "pending" %}
+    <form method="post"
+          action="{{ url_for('decide_leave_request', request_id=r.id) }}"
+          class="d-flex flex-column flex-sm-row gap-1">
+      <input type="hidden" name="action" value="approve">
+      <input type="hidden" name="manager_comment" value="">
+      <button type="submit" class="btn btn-success btn-sm">
+        Approve
+      </button>
+    </form>
+    <form method="post"
+          action="{{ url_for('decide_leave_request', request_id=r.id) }}"
+          class="d-flex flex-column flex-sm-row gap-1 mt-1">
+      <input type="hidden" name="action" value="reject">
+      <input type="hidden" name="manager_comment" value="">
+      <button type="submit" class="btn btn-danger btn-sm">
+        Reject
+      </button>
+    </form>
+  {% else %}
+    <span class="text-muted small">No actions available</span>
+  {% endif %}
+</td>
+
                 </tr>
               {% endfor %}
             </tbody>
