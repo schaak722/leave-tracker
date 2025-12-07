@@ -1,1 +1,17 @@
+<!doctype html>
+<html>
+  <body style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+    <p>Hi {{ employee.name }},</p>
 
+    <p>
+      Your leave request has been
+      <strong>{{ decision }}</strong>
+      by {{ manager_name }}.
+    </p>
+
+    <p>
+      You can log in to Leave Tracker for more details:<br>
+      <a href="{{ calendar_url }}">{{ calendar_url }}</a>
+    </p>
+  </body>
+</html>
