@@ -689,8 +689,8 @@ def request_leave():
             if not rows:
                 error = "Please add at least one date or range."
             else:
-                # Create one pending LeaveRequest per valid row
-                for start_date, end_date, code in rows:
+            # Create one pending LeaveRequest per valid row
+                for (start_date, end_date, code) in rows:
                     lr = LeaveRequest(
                         employee_id=employee.id,
                         requested_by_id=g.user.id,
@@ -702,6 +702,47 @@ def request_leave():
                     )
                     db.session.add(lr)
                 db.session.commit()
+
+                # Email notification to managers/admins about new leave request(s)
+                try:
+                    employee_user = g.user
+                    employee = employee_user.employee if hasattr(employee_user, "employee") and employee_user.employee else None
+                    employee_email = getattr(employee_user, "username", None)
+
+                    managers_and_admins = User.query.filter(
+                        User.active.is_(True),
+                        User.role.in_(["manager", "admin"])
+                    ).all()
+                    recipient_emails = [u.username for u in managers_and_admins if u.username]
+                except Exception:
+                    employee = None
+                    employee_email = None
+                    recipient_emails = []
+
+                if recipient_emails and employee and employee_email:
+                    subject = f"[Leave Tracker] New leave request from {employee.name}"
+                    leave_requests_url = url_for("list_leave_requests", _external=True)
+
+                    text_body = render_template(
+                        "email/new_leave_request_manager.txt",
+                        employee=employee,
+                        employee_email=employee_email,
+                        leave_requests_url=leave_requests_url,
+                    )
+                    html_body = render_template(
+                        "email/new_leave_request_manager.html",
+                        employee=employee,
+                        employee_email=employee_email,
+                        leave_requests_url=leave_requests_url,
+                    )
+
+                    send_email(
+                        subject=subject,
+                        recipients=recipient_emails,
+                        body_text=text_body,
+                        body_html=html_body,
+                        reply_to=employee_email,  # reply goes to employee
+                    )
 
                 if len(rows) == 1:
                     success = "Your leave request has been submitted."
@@ -803,10 +844,54 @@ def decide_leave_request(request_id):
             )
             db.session.add(entry)
 
-    elif action == "reject":
+        elif action == "reject":
         lr.status = "rejected"
 
     db.session.commit()
+
+    # Email notification to employee about decision
+    try:
+        employee = lr.employee
+        employee_user = (
+            User.query.filter_by(employee_id=employee.id, active=True).first()
+            if employee else None
+        )
+        employee_email = employee_user.username if employee_user and employee_user.username else None
+
+        manager_user = g.user
+        manager_email = getattr(manager_user, "username", None)
+        manager_name = manager_user.username if manager_user and manager_user.username else "Your manager"
+
+        decision_word = "approved" if action == "approve" else "rejected"
+
+        if employee_email and manager_email:
+            subject = f"[Leave Tracker] Your leave request has been {decision_word}"
+            calendar_url = url_for("index", _external=True)
+
+            text_body = render_template(
+                "email/leave_request_decision_employee.txt",
+                employee=employee,
+                manager_name=manager_name,
+                decision=decision_word,
+                calendar_url=calendar_url,
+            )
+            html_body = render_template(
+                "email/leave_request_decision_employee.html",
+                employee=employee,
+                manager_name=manager_name,
+                decision=decision_word,
+                calendar_url=calendar_url,
+            )
+
+            send_email(
+                subject=subject,
+                recipients=[employee_email],
+                body_text=text_body,
+                body_html=html_body,
+                reply_to=manager_email,  # reply goes to manager
+            )
+    except Exception as e:
+        app.logger.exception("Failed to send decision email: %s", e)
 
     return redirect(url_for("list_leave_requests", status="pending"))
 
