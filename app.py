@@ -844,7 +844,7 @@ def decide_leave_request(request_id):
             )
             db.session.add(entry)
 
-        elif action == "reject":
+    elif action == "reject":
         lr.status = "rejected"
 
     db.session.commit()
@@ -854,13 +854,22 @@ def decide_leave_request(request_id):
         employee = lr.employee
         employee_user = (
             User.query.filter_by(employee_id=employee.id, active=True).first()
-            if employee else None
+            if employee
+            else None
         )
-        employee_email = employee_user.username if employee_user and employee_user.username else None
+        employee_email = (
+            employee_user.username
+            if employee_user and employee_user.username
+            else None
+        )
 
         manager_user = g.user
         manager_email = getattr(manager_user, "username", None)
-        manager_name = manager_user.username if manager_user and manager_user.username else "Your manager"
+        manager_name = (
+            manager_user.username
+            if manager_user and manager_user.username
+            else "Your manager"
+        )
 
         decision_word = "approved" if action == "approve" else "rejected"
 
@@ -888,7 +897,7 @@ def decide_leave_request(request_id):
                 recipients=[employee_email],
                 body_text=text_body,
                 body_html=html_body,
-                reply_to=manager_email,  # reply goes to manager
+                reply_to=manager_email,  # replies go to the manager
             )
     except Exception as e:
         app.logger.exception("Failed to send decision email: %s", e)
