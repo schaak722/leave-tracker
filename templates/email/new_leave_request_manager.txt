@@ -3,7 +3,7 @@ New leave request from {{ employee.name }}
 Employee: {{ employee.name }}
 Email: {{ employee_email }}
 
-A new leave request has been submitted in the Leave Tracker.
+A new leave request has been submitted through the Keepmeposted Leave Tracker.
 
 Please log in to review and take action:
 {{ leave_requests_url }}
