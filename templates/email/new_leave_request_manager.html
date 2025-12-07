@@ -1,9 +1,18 @@
-New leave request from {{ employee.name }}
+<!doctype html>
+<html>
+  <body style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+    <p>New leave request from <strong>{{ employee.name }}</strong></p>
 
-Employee: {{ employee.name }}
-Email: {{ employee_email }}
+    <p>
+      <strong>Employee:</strong> {{ employee.name }}<br>
+      <strong>Email:</strong> {{ employee_email }}
+    </p>
 
-A new leave request has been submitted in the Leave Tracker.
+    <p>A new leave request has been submitted in the Leave Tracker.</p>
 
-Please log in to review and take action:
-{{ leave_requests_url }}
+    <p>
+      Please log in to review and take action:<br>
+      <a href="{{ leave_requests_url }}">{{ leave_requests_url }}</a>
+    </p>
+  </body>
+</html>
