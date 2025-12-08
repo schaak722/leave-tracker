@@ -191,21 +191,24 @@
         </tr>
         </thead>
         <tbody>
-       {% for emp in employees %}
-  <tr>
-    {% if g.is_employee and g.user and g.user.employee %}
-      {% if g.user.employee.id == emp.id %}
-        {% set name_class = "lt-emp-name-current" %}
-      {% else %}
-        {% set name_class = "lt-emp-name-other" %}
-      {% endif %}
-    {% else %}
-      {% set name_class = "" %}
-    {% endif %}
+        {% for emp in employees %}
+          <tr>
+            {# Employee name styling: only for employee view #}
+            {% if g.is_employee and g.user and g.user.employee %}
+              {% if g.user.employee.id == emp.id %}
+                {% set name_class = "lt-emp-name-current" %}
+              {% else %}
+                {% set name_class = "lt-emp-name-other" %}
+              {% endif %}
+            {% else %}
+              {% set name_class = "" %}
+            {% endif %}
 
-    <td class="{{ name_class }}">
-      {{ emp.name }}
-    </td>
+            <td class="{{ name_class }}">
+              {{ emp.name }}
+            </td>
+
+            {% for day in m.days %}
               {% set date_str = "%04d-%02d-%02d"|format(year, m.month_number, day) %}
               {% set key = emp.id|string ~ "_" ~ date_str %}
               {% set code = cell_codes.get(key, "") %}
