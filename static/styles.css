@@ -61,9 +61,9 @@ body {
 
 /* User menu button in header */
 .app-user-menu-btn {
-  font-size: 0.6rem;       /* slightly smaller text */
-  text-align: right;       /* right-align label within the button */
-  padding-inline: 0.5rem 0.75rem; /* a touch narrower, still tappable */
+  font-size: 0.7rem !important;             /* slightly smaller than normal buttons */
+  text-align: right;                        /* right-align label within the button */
+  padding-inline: 0.5rem 0.75rem !important;
 }
 
 .kmp-logo {
