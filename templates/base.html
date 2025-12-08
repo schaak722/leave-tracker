@@ -51,11 +51,6 @@
               {{ display_name }}
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
-              <li>
-                <h6 class="dropdown-header">
-                  {{ display_name }}
-                </h6>
-              </li>
 
               {% if g.is_admin %}
                 <li>
@@ -107,7 +102,6 @@
 
               {% else %}
                 {# Employee: only Logout in the dropdown #}
-                <li><hr class="dropdown-divider"></li>
                 <li>
                   <a class="dropdown-item text-danger"
                      href="{{ url_for('logout') }}">
