@@ -113,14 +113,14 @@ input[type="submit"] {
 
 /* User menu button in header */
 .app-user-menu-btn {
-  font-size: 0.7rem !important;             /* slightly smaller than normal buttons */
+  font-size: 0.8rem !important;             /* slightly smaller than normal buttons */
   text-align: right;                        /* right-align label within the button */
   padding-inline: 0.5rem 0.75rem !important;
 }
 
 /* Smaller, right-aligned items in the header user dropdown */
 .app-nav .dropdown-menu {
-  font-size: 0.75rem;      /* smaller text inside the menu */
+  font-size: 0.8rem;      /* smaller text inside the menu */
   padding: 0.25rem 0.5rem;
 }
 
