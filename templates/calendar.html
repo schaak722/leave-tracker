@@ -188,12 +188,12 @@
               {{ day }}
             </th>
           {% endfor %}
-        </tr>
+                </tr>
         </thead>
         <tbody>
         {% for emp in employees %}
           <tr>
-            {# Employee name styling: only for employee view #}
+            {# Employee name styling: only for employee view with a linked employee #}
             {% if g.is_employee and g.user and g.user.employee %}
               {% if g.user.employee.id == emp.id %}
                 {% set name_class = "lt-emp-name-current" %}
@@ -236,6 +236,7 @@
           </tr>
         {% endfor %}
         </tbody>
+
       </table>
     </div>
   </div>
