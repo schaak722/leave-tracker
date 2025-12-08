@@ -107,13 +107,13 @@ button,
 input[type="submit"] {
   border-radius: 999px !important;
   font-weight: 500 !important;
-  font-size: 0.8rem !important;
+  font-size: 0.85rem !important;
   padding: 4px 12px !important;
 }
 
 /* User menu button in header */
 .app-user-menu-btn {
-  font-size: 0.8rem !important;             /* slightly smaller than normal buttons */
+  font-size: 0.85rem !important;             /* slightly smaller than normal buttons */
   text-align: right;                        /* right-align label within the button */
   padding-inline: 0.5rem 0.75rem !important;
 }
