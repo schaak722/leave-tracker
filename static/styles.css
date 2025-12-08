@@ -118,6 +118,18 @@ input[type="submit"] {
   padding-inline: 0.5rem 0.75rem !important;
 }
 
+/* Smaller, right-aligned items in the header user dropdown */
+.app-nav .dropdown-menu {
+  font-size: 0.75rem;      /* smaller text inside the menu */
+  padding: 0.25rem 0.5rem;
+}
+
+.app-nav .dropdown-menu .dropdown-item {
+  font-size: 0.75rem;      /* ensure items inherit the smaller size */
+  text-align: right;       /* right-align the text like "Logout" */
+  padding-right: 1rem;
+}
+
 .btn-primary,
 .btn-outline-primary {
   border-color: var(--accent) !important;
