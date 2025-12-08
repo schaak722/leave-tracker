@@ -235,8 +235,8 @@ def load_logged_in_user():
         if user and user.active:
             g.user = user
 
-            # Backwards compatible: treat legacy "user" as "employee"
-            role = user.role or "employee"
+            # Normalise role to handle "Employee", "USER", etc.
+            role = (user.role or "employee").strip().lower()
             if role == "user":
                 role = "employee"
 
