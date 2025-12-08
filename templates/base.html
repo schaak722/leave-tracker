@@ -32,56 +32,91 @@
         </a>
       </div>
 
-      <!-- Right side: role-based actions -->
+      <!-- Right side: user dropdown / auth -->
       <div class="app-nav-right d-flex align-items-center gap-2">
         {% if g.user %}
 
-          {# ADMIN: Leave requests · Manage users · Manage employees · Logout #}
-          {% if g.is_admin %}
-            <a href="{{ url_for('list_leave_requests') }}"
-               class="btn btn-outline-secondary btn-sm">
-              Leave requests
-            </a>
-
-            <a href="{{ url_for('manage_users') }}"
-               class="btn btn-outline-secondary btn-sm">
-              Manage users
-            </a>
-
-            <a href="{{ url_for('manage_employees') }}"
-               class="btn btn-outline-secondary btn-sm">
-              Manage employees
-            </a>
-
-            <a href="{{ url_for('logout') }}"
-               class="btn btn-outline-danger btn-sm">
-              Logout
-            </a>
-
-          {# MANAGER: Request leave · Leave requests · Logout #}
-          {% elif g.is_manager %}
-            <a href="{{ url_for('request_leave') }}"
-               class="btn btn-outline-primary btn-sm">
-              Request leave
-            </a>
-
-            <a href="{{ url_for('list_leave_requests') }}"
-               class="btn btn-outline-secondary btn-sm">
-              Leave requests
-            </a>
-
-            <a href="{{ url_for('logout') }}"
-               class="btn btn-outline-danger btn-sm">
-              Logout
-            </a>
-
-          {# EMPLOYEE: Logout only (request leave stays in the green card) #}
+          {% if g.user.employee %}
+            {% set display_name = g.user.employee.name %}
           {% else %}
-            <a href="{{ url_for('logout') }}"
-               class="btn btn-outline-danger btn-sm">
-              Logout
-            </a>
+            {% set display_name = g.user.username %}
           {% endif %}
+
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                    type="button"
+                    id="userMenuDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+              {{ display_name }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
+              <li>
+                <h6 class="dropdown-header">
+                  {{ display_name }}
+                </h6>
+              </li>
+
+              {% if g.is_admin %}
+                <li>
+                  <a class="dropdown-item"
+                     href="{{ url_for('list_leave_requests') }}">
+                    Leave requests
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item"
+                     href="{{ url_for('manage_users') }}">
+                    Manage users
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item"
+                     href="{{ url_for('manage_employees') }}">
+                    Manage employees
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a class="dropdown-item text-danger"
+                     href="{{ url_for('logout') }}">
+                    Logout
+                  </a>
+                </li>
+
+              {% elif g.is_manager %}
+                <li>
+                  <a class="dropdown-item"
+                     href="{{ url_for('list_leave_requests') }}">
+                    Leave requests
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item"
+                     href="{{ url_for('request_leave') }}">
+                    Request leave
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a class="dropdown-item text-danger"
+                     href="{{ url_for('logout') }}">
+                    Logout
+                  </a>
+                </li>
+
+              {% else %}
+                {# Employee: only Logout in the dropdown #}
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a class="dropdown-item text-danger"
+                     href="{{ url_for('logout') }}">
+                    Logout
+                  </a>
+                </li>
+              {% endif %}
+            </ul>
+          </div>
 
         {% else %}
           {# Logged-out state #}
@@ -107,11 +142,13 @@
   <footer class="lt-footer mt-auto">
     <div class="container d-flex justify-content-between align-items-center">
       <div class="text-muted small">
-        All rights reserved.
+        Leave Tracker
       </div>
       <div class="text-muted small">
-        <a href="https://schaak.mt" target="_blank" class="lt-footer-link">
-          Developed by Schaak.mt
+        <a href="https://keepmeposted.com.mt"
+           target="_blank"
+           class="lt-footer-link">
+          Keepmeposted
         </a>
       </div>
     </div>
