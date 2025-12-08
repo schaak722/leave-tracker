@@ -61,7 +61,7 @@ body {
 
 /* User menu button in header */
 .app-user-menu-btn {
-  font-size: 0.75rem;       /* slightly smaller text */
+  font-size: 0.6rem;       /* slightly smaller text */
   text-align: right;       /* right-align label within the button */
   padding-inline: 0.5rem 0.75rem; /* a touch narrower, still tappable */
 }
