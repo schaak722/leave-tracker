@@ -43,13 +43,13 @@
           {% endif %}
 
           <div class="dropdown">
-            <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
-                    type="button"
-                    id="userMenuDropdown"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false">
-              {{ display_name }}
-            </button>
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle app-user-menu-btn text-end"
+              type="button"
+                id="userMenuDropdown"
+              data-bs-toggle="dropdown"
+            aria-expanded="false">
+        {{ display_name }}
+    </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
 
               {% if g.is_admin %}
