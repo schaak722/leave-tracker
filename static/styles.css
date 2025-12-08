@@ -445,12 +445,12 @@ input[type="submit"] {
 
 /* Highlight current employee row in calendar (employee view only) */
 .lt-emp-name-current {
-  color: #000000;
+  color: #000000 !important;
   font-weight: 600;
 }
 
 .lt-emp-name-other {
-  color: #9ca3af; /* soft grey */
+  color: #9ca3af !important;
 }
 
 /* ===========================
