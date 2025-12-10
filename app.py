@@ -128,9 +128,20 @@ class Employee(db.Model):
     active = db.Column(db.Boolean, default=True)
     birthday = db.Column(db.Date, nullable=True)  # Birthday stored on the employee
 
-    def __repr__(self):
-        return f"<Employee {self.name}>"
+    # Optional reporting manager (another Employee)
+    reporting_manager_id = db.Column(
+        db.Integer,
+        db.ForeignKey("employee.id"),
+        nullable=True,
+    )
+    reporting_manager = db.relationship(
+        "Employee",
+        remote_side=[id],
+        backref="direct_reports",
+    )
 
+    def __repr__(self):
+        return f""
 
 class Entitlement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
