@@ -677,8 +677,7 @@ def request_leave():
         rows = []
 
         for idx, (start_str, end_str, code) in enumerate(
-            zip(start_list, end_list, code_list),
-            start=1,
+            zip(start_list, end_list, code_list), start=1
         ):
             # Skip completely empty rows
             if not start_str and not end_str and not code:
@@ -710,6 +709,7 @@ def request_leave():
                     error = "You cannot book weekends or public holidays"
                     break
                 current += timedelta(days=1)
+
             if error:
                 break
 
@@ -721,8 +721,7 @@ def request_leave():
 
             # 3) Check for existing leave entries on any of those working days
             existing = (
-                LeaveEntry.query
-                .filter(
+                LeaveEntry.query.filter(
                     LeaveEntry.employee_id == employee.id,
                     LeaveEntry.date.in_(working_days),
                 )
@@ -738,7 +737,7 @@ def request_leave():
             if not rows:
                 error = "Please add at least one date or range."
             else:
-            # Create one pending LeaveRequest per valid row
+                # Create one pending LeaveRequest per valid row
                 for (start_date, end_date, code) in rows:
                     lr = LeaveRequest(
                         employee_id=employee.id,
@@ -750,20 +749,21 @@ def request_leave():
                         employee_comment=comment or None,
                     )
                     db.session.add(lr)
+
                 db.session.commit()
 
-    # Email notification to relevant manager(s) about new leave request(s)
-        try:
-            employee_user = g.user
-            # We already resolved employee above; ensure it's still valid
-            employee_email = getattr(employee_user, "username", None)
+                # Email notification to relevant manager(s) about new leave request(s)
+                try:
+                    employee_user = g.user
+                    # We already resolved employee above; ensure it's still valid
+                    employee_email = getattr(employee_user, "username", None)
 
-            # Use helper: reporting manager if set, otherwise all active managers
-            approvers = get_approvers_for_employee(employee)
-            recipient_emails = [u.username for u in approvers if u.username]
-        except Exception:
-            employee_email = None
-            recipient_emails = []
+                    # Use helper: reporting manager if set, otherwise all active managers
+                    approvers = get_approvers_for_employee(employee)
+                    recipient_emails = [u.username for u in approvers if u.username]
+                except Exception:
+                    employee_email = None
+                    recipient_emails = []
 
                 if recipient_emails and employee and employee_email:
                     subject = f"[Leave Tracker] New leave request from {employee.name}"
@@ -803,8 +803,7 @@ def request_leave():
 
     # All requests for this employee, newest first
     requests = (
-        LeaveRequest.query
-        .filter_by(employee_id=employee.id)
+        LeaveRequest.query.filter_by(employee_id=employee.id)
         .order_by(LeaveRequest.created_at.desc())
         .all()
     )
