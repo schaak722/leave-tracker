@@ -413,6 +413,44 @@ def parse_birthday(birthday_str: str):
 
     return None
 
+def get_approvers_for_employee(employee: Employee):
+    """
+    Return a list of User objects who should be notified / approve leave
+    for this employee.
+
+    Phase 1 logic:
+    - If employee.reporting_manager_id is set and that person has an active
+      manager User, return just that user.
+    - Otherwise fall back to all active managers (existing behaviour).
+    """
+    if not employee:
+        return []
+
+    approvers = []
+
+    # 1) Explicit reporting manager, if configured
+    if employee.reporting_manager_id:
+        manager_user = (
+            User.query.filter_by(
+                employee_id=employee.reporting_manager_id,
+                role="manager",
+                active=True,
+            )
+            .first()
+        )
+        if manager_user:
+            approvers.append(manager_user)
+
+    # 2) Fallback: all active managers (current behaviour)
+    if not approvers:
+        approvers = (
+            User.query.filter_by(role="manager", active=True)
+            .order_by(User.username)
+            .all()
+        )
+
+    return approvers
+
 # ---------------------------
 # Routes
 # ---------------------------
@@ -714,22 +752,18 @@ def request_leave():
                     db.session.add(lr)
                 db.session.commit()
 
-                # Email notification to managers/admins about new leave request(s)
-                try:
-                    employee_user = g.user
-                    employee = employee_user.employee if hasattr(employee_user, "employee") and employee_user.employee else None
-                    employee_email = getattr(employee_user, "username", None)
+    # Email notification to relevant manager(s) about new leave request(s)
+        try:
+            employee_user = g.user
+            # We already resolved employee above; ensure it's still valid
+            employee_email = getattr(employee_user, "username", None)
 
-                    # Only notify managers (not admins)
-                    managers = User.query.filter(
-                        User.active.is_(True),
-                        User.role == "manager",
-                    ).all()
-                    recipient_emails = [u.username for u in managers if u.username]
-                except Exception:
-                    employee = None
-                    employee_email = None
-                    recipient_emails = []
+            # Use helper: reporting manager if set, otherwise all active managers
+            approvers = get_approvers_for_employee(employee)
+            recipient_emails = [u.username for u in approvers if u.username]
+        except Exception:
+            employee_email = None
+            recipient_emails = []
 
                 if recipient_emails and employee and employee_email:
                     subject = f"[Leave Tracker] New leave request from {employee.name}"
@@ -1090,13 +1124,26 @@ def edit_employee(employee_id):
     )
     current_year_ent_days = ent_for_current_year.days if ent_for_current_year else ""
 
+    # Possible reporting managers = employees who have an active manager user
+    manager_employees = (
+        db.session.query(Employee)
+        .join(User, User.employee_id == Employee.id)
+        .filter(User.active.is_(True), User.role == "manager")
+        .order_by(Employee.name)
+        .all()
+    )
+
+    # Ensure current reporting manager (if any) is in the list even if their user changed
+    if emp.reporting_manager and emp.reporting_manager not in manager_employees:
+        manager_employees.append(emp.reporting_manager)
+
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         active = True if request.form.get("active") == "on" else False
         birthday_str = request.form.get("birthday", "").strip()
-
         ent_year_str = request.form.get("ent_year", "").strip()
         ent_days_str = request.form.get("ent_days", "").strip()
+        reporting_manager_id_str = (request.form.get("reporting_manager_id") or "").strip()
 
         # --- validate name ---
         if not name:
@@ -1129,6 +1176,15 @@ def edit_employee(employee_id):
             # Parse and set birthday
             bday = parse_birthday(birthday_str)
             emp.birthday = bday if bday else None
+
+            # Reporting manager (nullable)
+            if reporting_manager_id_str:
+                try:
+                    emp.reporting_manager_id = int(reporting_manager_id_str)
+                except ValueError:
+                    emp.reporting_manager_id = None
+            else:
+                emp.reporting_manager_id = None
 
             # If leave days info was provided, update/create that year
             if ent_year is not None and ent_days is not None:
@@ -1165,6 +1221,7 @@ def edit_employee(employee_id):
         error=error,
         current_year=current_year,
         current_year_ent_days=current_year_ent_days,
+        manager_employees=manager_employees,
     )
 
 @app.route("/admin/employee/<int:employee_id>/entitlement/<int:year>/delete", methods=["POST"])
