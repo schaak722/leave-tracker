@@ -1,70 +1,94 @@
 {% extends "base.html" %}
+{% block title %}Manage Employees - Leave Tracker{% endblock %}
 
 {% block content %}
-<h2 class="mb-3">Manage Employees</h2>
 
-<p>
-  <a href="{{ url_for('add_employee') }}" class="btn btn-sm btn-outline-success">
-    Add / Update Leave Days
-  </a>
-</p>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Manage Employees</h1>
+    <div>
+      <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm me-2">
+        Back to calendar
+      </a>
+      <a href="{{ url_for('add_employee') }}" class="btn btn-primary btn-sm">
+        Add / Update Leave Days
+      </a>
+    </div>
+  </div>
 
-<div class="card">
-  <div class="card-body p-0">
-    <table class="table table-sm table-bordered mb-0 summary-table">
-      <thead class="table-light">
-        <tr>
-          <th>Name</th>
-          <th>Date of Birth</th>
-          <th>Active</th>
-          <th>Leave Days</th>
-          <th style="width: 180px;"></th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for emp in employees %}
-        <tr>
-          <td>{{ emp.name }}</td>
-          <td>
-            {% if emp.birthday %}
-              {{ emp.birthday.strftime('%d/%m/%Y') }}
-            {% else %}
-              <em>-</em>
-            {% endif %}
-          </td>
-          <td>{{ "Yes" if emp.active else "No" }}</td>
-          <td>
-            {% if emp.entitlements %}
-              <div class="leave-days-list">
+  {% if employees %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Date of birth</th>
+            <th scope="col">Active</th>
+            <th scope="col">Reporting manager</th>
+            <th scope="col" style="width: 30%;">Leave days (by year)</th>
+            <th scope="col" class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for emp in employees %}
+          <tr>
+            <td>{{ emp.name }}</td>
+            <td>
+              {% if emp.birthday %}
+                {{ emp.birthday.strftime('%d/%m/%Y') }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>
+              {% if emp.active %}
+                <span class="badge bg-success">Yes</span>
+              {% else %}
+                <span class="badge bg-secondary">No</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if emp.reporting_manager %}
+                {{ emp.reporting_manager.name }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>
+              {% if emp.entitlements %}
                 {% for ent in emp.entitlements|sort(attribute="year") %}
-                  <span class="leave-chip">
-                    <span class="leave-chip-year">{{ ent.year }}</span>
-                    <span class="leave-chip-days">{{ "%.1f"|format(ent.days) }}d</span>
+                  <span class="me-2">
+                    <strong>{{ ent.year }}</strong>:
+                    {{ "%.1f"|format(ent.days) }}d
                   </span>
                 {% endfor %}
-              </div>
-            {% else %}
-              <em>None</em>
-            {% endif %}
-          </td>
-          <td>
-            <a href="{{ url_for('edit_employee', employee_id=emp.id) }}"
-               class="btn btn-sm btn-outline-primary mb-1">Edit</a>
-            <form method="post"
-                  action="{{ url_for('delete_employee', employee_id=emp.id) }}"
-                  style="display:inline;"
-                  onsubmit="return confirm('Delete this employee and all their leave records?');">
-              <button type="submit" class="btn btn-sm btn-outline-danger mb-1">Delete</button>
-            </form>
-          </td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
+              {% else %}
+                <span class="text-muted">None</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('edit_employee', employee_id=emp.id) }}"
+                 class="btn btn-outline-primary btn-sm me-1">
+                Edit
+              </a>
+
+              <form action="{{ url_for('delete_employee', employee_id=emp.id) }}"
+                    method="post"
+                    class="d-inline"
+                    onsubmit="return confirm('Delete this employee and all their leave data?');">
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted mb-0">No employees found.</p>
+  {% endif %}
 </div>
 
-<a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm mt-3">
-  Back to calendar
-</a>
 {% endblock %}
