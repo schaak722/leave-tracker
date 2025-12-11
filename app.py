@@ -1106,121 +1106,256 @@ def manage_employees():
     employees = Employee.query.order_by(Employee.name).all()
     return render_template("manage_employees.html", employees=employees)
 
-@app.route("/admin/employee/<int:employee_id>/edit", methods=["GET", "POST"])
+@app.route("/admin/employees/<int:employee_id>/edit", methods=["GET", "POST"])
 def edit_employee(employee_id):
-    if not g.is_admin:
-        return redirect(url_for("login"))
+    # Only admins should manage employees + logins
+    if not g.user or not g.is_admin:
+        abort(403)
 
-    emp = Employee.query.get_or_404(employee_id)
-    error = None
+    employee = Employee.query.get_or_404(employee_id)
 
-    # Default to current year for leave days editor
-    current_year = datetime.now().year
-    ent_for_current_year = (
-        Entitlement.query
-        .filter_by(employee_id=emp.id, year=current_year)
-        .first()
-    )
-    current_year_ent_days = ent_for_current_year.days if ent_for_current_year else ""
-
-    # Possible reporting managers = employees who have an active manager user
+    # Possible reporting managers: all active employees except self
     manager_employees = (
-        db.session.query(Employee)
-        .join(User, User.employee_id == Employee.id)
-        .filter(User.active.is_(True), User.role == "manager")
+        Employee.query.filter(Employee.active.is_(True), Employee.id != employee.id)
         .order_by(Employee.name)
         .all()
     )
 
-    # Ensure current reporting manager (if any) is in the list even if their user changed
-    if emp.reporting_manager and emp.reporting_manager not in manager_employees:
-        manager_employees.append(emp.reporting_manager)
+    # Optional linked user (we assume at most one is relevant)
+    existing_user = (
+        User.query.filter_by(employee_id=employee.id)
+        .order_by(User.id.asc())
+        .first()
+    )
+
+    error = None
 
     if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        active = True if request.form.get("active") == "on" else False
-        birthday_str = request.form.get("birthday", "").strip()
-        ent_year_str = request.form.get("ent_year", "").strip()
-        ent_days_str = request.form.get("ent_days", "").strip()
-        reporting_manager_id_str = (request.form.get("reporting_manager_id") or "").strip()
+        action = (request.form.get("action") or "save").strip()
 
-        # --- validate name ---
-        if not name:
-            error = "Name is required"
-        else:
-            # Check for duplicate name on another employee
-            existing = (
-                Employee.query
-                .filter(Employee.name == name, Employee.id != emp.id)
-                .first()
-            )
-            if existing:
-                error = "Another employee with that name already exists."
-
-        # --- validate leave days (if provided) ---
-        ent_year = None
-        ent_days = None
-        if not error and (ent_year_str or ent_days_str):
+        # -----------------------------
+        # 1) Remove entitlement action
+        # -----------------------------
+        if action.startswith("remove_entitlement_"):
+            # Extract entitlement id from action value
+            ent_id_str = action.replace("remove_entitlement_", "")
             try:
-                ent_year = int(ent_year_str)
-                ent_days = float(ent_days_str)
+                ent_id = int(ent_id_str)
             except ValueError:
-                error = "Invalid year or leave days."
-
-        # --- apply changes if no errors ---
-        if not error:
-            emp.name = name
-            emp.active = active
-
-            # Parse and set birthday
-            bday = parse_birthday(birthday_str)
-            emp.birthday = bday if bday else None
-
-            # Reporting manager (nullable)
-            if reporting_manager_id_str:
-                try:
-                    emp.reporting_manager_id = int(reporting_manager_id_str)
-                except ValueError:
-                    emp.reporting_manager_id = None
+                error = "Invalid entitlement selected."
             else:
-                emp.reporting_manager_id = None
-
-            # If leave days info was provided, update/create that year
-            if ent_year is not None and ent_days is not None:
-                ent = (
-                    Entitlement.query
-                    .filter_by(employee_id=emp.id, year=ent_year)
-                    .first()
-                )
-                if ent:
-                    ent.days = ent_days
+                ent = Entitlement.query.filter_by(
+                    id=ent_id,
+                    employee_id=employee.id,
+                ).first()
+                if not ent:
+                    error = "Entitlement not found."
                 else:
-                    ent = Entitlement(
-                        employee_id=emp.id,
-                        year=ent_year,
-                        days=ent_days,
-                    )
-                    db.session.add(ent)
+                    db.session.delete(ent)
+                    db.session.commit()
+                    return redirect(url_for("edit_employee", employee_id=employee.id))
 
-            db.session.commit()
-            return redirect(url_for("manage_employees"))
+        # -----------------------------
+        # 2) Save employee + login
+        # -----------------------------
+        else:
+            # Basic employee fields
+            name = (request.form.get("name") or "").strip()
+            birthday_str = (request.form.get("birthday") or "").strip()
+            active = bool(request.form.get("active"))
 
-        # If there was an error, keep what user typed for ent fields
-        if ent_year_str:
-            try:
-                current_year = int(ent_year_str)
-            except ValueError:
-                pass
-        if ent_days_str:
-            current_year_ent_days = ent_days_str
+            reporting_manager_id_raw = (
+                request.form.get("reporting_manager_id") or ""
+            ).strip()
+
+            if not name:
+                error = "Employee name is required."
+            else:
+                employee.name = name
+                employee.active = active
+
+            # Birthday parsing
+            if not error:
+                if birthday_str:
+                    birthday = parse_birthday(birthday_str)
+                    if not birthday:
+                        error = "Birthday format not recognised."
+                    else:
+                        employee.birthday = birthday
+                else:
+                    employee.birthday = None
+
+            # Reporting manager
+            if not error:
+                if reporting_manager_id_raw:
+                    try:
+                        mgr_id = int(reporting_manager_id_raw)
+                    except ValueError:
+                        error = "Invalid reporting manager selected."
+                    else:
+                        if mgr_id == employee.id:
+                            error = "An employee cannot be their own manager."
+                        else:
+                            mgr = Employee.query.get(mgr_id)
+                            if not mgr:
+                                error = "Reporting manager not found."
+                            else:
+                                employee.reporting_manager_id = mgr.id
+                else:
+                    employee.reporting_manager_id = None
+
+            # -----------------------------
+            # 2a) Login / User section
+            # -----------------------------
+            if not error:
+                login_username = (request.form.get("login_username") or "").strip()
+                login_role = (request.form.get("login_role") or "").strip().lower()
+                login_active = bool(request.form.get("login_active"))
+                login_password = request.form.get("login_password") or ""
+                login_password_confirm = (
+                    request.form.get("login_password_confirm") or ""
+                )
+                login_unlink = bool(request.form.get("login_unlink"))
+
+                allowed_roles = {"admin", "manager", "employee"}
+
+                # Unlink login from employee (but keep user record)
+                if login_unlink and existing_user:
+                    existing_user.employee_id = None
+
+                else:
+                    # If they touch any login fields OR there's already a user, we process login logic.
+                    if (
+                        existing_user
+                        or login_username
+                        or login_password
+                        or login_role
+                        or login_active
+                    ):
+                        # Default role if none explicitly set
+                        if not login_role:
+                            if existing_user and existing_user.role:
+                                login_role = existing_user.role
+                            else:
+                                login_role = "employee"
+
+                        if login_role not in allowed_roles:
+                            error = "Invalid role for login user."
+                        else:
+                            # Determine username we will use
+                            if existing_user:
+                                username_to_set = (
+                                    login_username or existing_user.username
+                                )
+                            else:
+                                username_to_set = login_username
+
+                            if not username_to_set:
+                                error = (
+                                    "Username/email is required for a login user."
+                                )
+
+                            # Unique username check
+                            if not error:
+                                q = User.query.filter(
+                                    User.username == username_to_set
+                                )
+                                if existing_user:
+                                    q = q.filter(User.id != existing_user.id)
+                                conflict = q.first()
+                                if conflict:
+                                    error = (
+                                        "A user with that username already exists."
+                                    )
+
+                            if not error:
+                                # Update existing user
+                                if existing_user:
+                                    existing_user.username = username_to_set
+                                    existing_user.role = login_role
+                                    existing_user.active = login_active
+                                    existing_user.employee_id = employee.id
+
+                                    if login_password:
+                                        if (
+                                            login_password
+                                            != login_password_confirm
+                                        ):
+                                            error = (
+                                                "Passwords do not match."
+                                            )
+                                        else:
+                                            existing_user.set_password(
+                                                login_password
+                                            )
+
+                                # Create new user
+                                else:
+                                    if not login_password:
+                                        error = (
+                                            "Password is required to create a new login."
+                                        )
+                                    elif (
+                                        login_password != login_password_confirm
+                                    ):
+                                        error = "Passwords do not match."
+                                    else:
+                                        new_user = User(
+                                            username=username_to_set,
+                                            role=login_role,
+                                            active=login_active,
+                                            employee_id=employee.id,
+                                        )
+                                        new_user.set_password(login_password)
+                                        db.session.add(new_user)
+                                        existing_user = new_user
+
+            # -----------------------------
+            # 2b) Entitlement add/update
+            # -----------------------------
+            if not error:
+                ent_year_str = (request.form.get("ent_year") or "").strip()
+                ent_days_str = (request.form.get("ent_days") or "").strip()
+
+                if ent_year_str or ent_days_str:
+                    try:
+                        ent_year = int(ent_year_str)
+                        ent_days = float(ent_days_str)
+                    except ValueError:
+                        error = (
+                            "Year must be a whole number and leave days a number."
+                        )
+                    else:
+                        ent = Entitlement.query.filter_by(
+                            employee_id=employee.id,
+                            year=ent_year,
+                        ).first()
+                        if not ent:
+                            ent = Entitlement(
+                                employee_id=employee.id,
+                                year=ent_year,
+                                days=ent_days,
+                            )
+                            db.session.add(ent)
+                        else:
+                            ent.days = ent_days
+
+            if not error:
+                db.session.commit()
+                return redirect(url_for("manage_employees"))
+
+    # GET or POST with validation error
+    entitlements = sorted(employee.entitlements, key=lambda e: e.year)
+    current_year = datetime.now().year
 
     return render_template(
         "edit_employee.html",
-        employee=emp,
-        error=error,
-        current_year=current_year,
-        current_year_ent_days=current_year_ent_days,
+        employee=employee,
         manager_employees=manager_employees,
+        entitlements=entitlements,
+        user=existing_user,
+        current_year=current_year,
+        error=error,
     )
 
 @app.route("/admin/employee/<int:employee_id>/entitlement/<int:year>/delete", methods=["POST"])
