@@ -825,8 +825,8 @@ def list_leave_requests():
     if not (g.is_admin or g.is_manager):
         return redirect(url_for("login"))
 
-    # Filter: pending by default, or ?status=all / approved / rejected / cancelled
-    filter_status = request.args.get("status", "pending")
+    # Filter: all by default, or ?status=pending / approved / rejected / all
+    filter_status = request.args.get("status", "all")
 
     query = (
         LeaveRequest.query
