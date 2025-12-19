@@ -83,19 +83,24 @@
               </a>
 
             {% if not show_archived %}
-            <form action="{{ url_for('delete_employee', employee_id=emp.id) }}"
-                  method="post"
-                  class="d-inline"
-                  onsubmit="return confirm('Are you sure you want to archive this user?');">
-              <button type="submit" class="btn btn-outline-warning btn-sm">
-                Archive
-              </button>
-            </form>
-          {% else %}
-            <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
-              Archived
-            </button>
-          {% endif %}
+              <form action="{{ url_for('delete_employee', employee_id=emp.id) }}"
+                    method="post"
+                    class="d-inline"
+                    onsubmit="return confirm('Are you sure you want to archive this user?');">
+                <button type="submit" class="btn btn-outline-warning btn-sm">
+                  Archive
+                </button>
+              </form>
+            {% else %}
+              <form action="{{ url_for('restore_employee', employee_id=emp.id) }}"
+                    method="post"
+                    class="d-inline"
+                    onsubmit="return confirm('Are you sure you want to restore this user?');">
+                <button type="submit" class="btn btn-outline-success btn-sm">
+                  Restore
+                </button>
+              </form>
+            {% endif %}
               
             </td>
           </tr>
