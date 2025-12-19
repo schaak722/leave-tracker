@@ -22,16 +22,20 @@
         <h2 class="h5">Employee details</h2>
 
         <div class="mb-3">
-          <label for="name" class="form-label">Name</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            class="form-control"
-            value="{{ employee.name }}"
-            required
-          >
-        </div>
+  <label for="birthday" class="form-label">Birthday</label>
+  <input
+    type="text"
+    id="birthday"
+    name="birthday"
+    class="form-control"
+    placeholder="DD/MM/YY"
+    value="{% if employee.birthday %}{{ employee.birthday.strftime('%d/%m/%y') }}{% endif %}"
+  >
+  <div class="form-text">
+    Accepted formats: DD/MM/YY (preferred), DD/MM/YYYY, YYYY-MM-DD
+  </div>
+</div>
+
 
         <div class="mb-3">
           <label for="birthday" class="form-label">Birthday</label>
@@ -45,6 +49,35 @@
           >
           <div class="form-text">
             Accepted formats: 1978-07-22, 22/07/1978, 22-07-1978
+          </div>
+        </div>
+
+          <div class="row g-3">
+          <div class="col-md-6">
+            <label for="start_date" class="form-label">Start date</label>
+            <input
+              type="text"
+              id="start_date"
+              name="start_date"
+              class="form-control"
+              placeholder="DD/MM/YY"
+              value="{% if employee.start_date %}{{ employee.start_date.strftime('%d/%m/%y') }}{% endif %}"
+            >
+          </div>
+        
+          <div class="col-md-6">
+            <label for="end_date" class="form-label">End date</label>
+            <input
+              type="text"
+              id="end_date"
+              name="end_date"
+              class="form-control"
+              placeholder="DD/MM/YY"
+              value="{% if employee.end_date %}{{ employee.end_date.strftime('%d/%m/%y') }}{% endif %}"
+            >
+            <div class="form-text">
+              Leave blank if the employee is still employed.
+            </div>
           </div>
         </div>
 
