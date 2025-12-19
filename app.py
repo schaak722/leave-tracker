@@ -3,6 +3,8 @@ import calendar
 import os
 from collections import defaultdict
 
+from sqlalchemy import and_, or_
+
 import smtplib
 from email.message import EmailMessage
 
@@ -323,25 +325,53 @@ def iterate_working_days(start_date: date, end_date: date):
 def compute_year_summary(year: int):
     """
     Return:
-      - employees (only those with entitlement for this year & active),
+      - employees shown on the calendar for this year (based on employment date overlap),
       - per_employee list with entitlement/taken/remaining,
       - cell_codes mapping "employeeId_YYYY-MM-DD" -> code ("F"/"H").
     """
-    # Only employees who have an entitlement for this year AND are active
+    year_start = date(year, 1, 1)
+    year_end = date(year, 12, 31)
+
+    # Employment overlap:
+    #  - start_date is null OR start_date <= year_end
+    #  - end_date is null OR end_date >= year_start
+    overlaps_year = and_(
+        or_(Employee.start_date.is_(None), Employee.start_date <= year_end),
+        or_(Employee.end_date.is_(None), Employee.end_date >= year_start),
+    )
+
+    # Employees who have an entitlement for this year AND overlap the year
     employees = (
         db.session.query(Employee)
         .join(Entitlement, Employee.id == Entitlement.employee_id)
-        .filter(Entitlement.year == year, Employee.active.is_(True))
+        .filter(Entitlement.year == year)
+        .filter(overlaps_year)
         .order_by(Employee.name)
         .all()
     )
 
     entitlements = Entitlement.query.filter_by(year=year).all()
+
     entries = (
         LeaveEntry.query
         .filter(db.extract("year", LeaveEntry.date) == year)
         .all()
     )
+
+    # Ensure anyone with leave entries in this year remains visible even if entitlement is missing
+    entry_employee_ids = {e.employee_id for e in entries}
+    if entry_employee_ids:
+        employees_with_entries = (
+            Employee.query
+            .filter(Employee.id.in_(entry_employee_ids))
+            .order_by(Employee.name)
+            .all()
+        )
+        # Merge + de-duplicate
+        employees_by_id = {e.id: e for e in employees}
+        for e in employees_with_entries:
+            employees_by_id[e.id] = e
+        employees = sorted(employees_by_id.values(), key=lambda e: (e.name or "").lower())
 
     entitlement_map = {e.employee_id: e.days for e in entitlements}
 
