@@ -1287,11 +1287,10 @@ def edit_employee(employee_id):
                         days=ent_days,
                     )
                     db.session.add(ent)
-
+                
                 if not error:
-                db.session.commit()
-                return redirect(url_for("manage_employees"))
-
+                    db.session.commit()
+                    return redirect(url_for("manage_employees"))
 
         # If there was an error, keep what user typed for ent fields
         if ent_year_str:
