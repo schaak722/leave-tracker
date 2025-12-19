@@ -11,17 +11,18 @@
   </div>
 
   {% if error %}
-    <div class="alert alert-danger">
+    <div class="alert alert-danger" role="alert">
       {{ error }}
     </div>
   {% endif %}
 
   <form method="post" class="mb-4">
-    <div class="row">
-      <div class="col-md-6">
-        <h2 class="h5">Employee details</h2>
+    <div class="row g-4">
+      <!-- LEFT: Employee details -->
+      <div class="col-lg-6">
+        <h2 class="h5 mb-3">Employee details</h2>
 
-        <!-- Name (RESTORED) -->
+        <!-- Name -->
         <div class="mb-3">
           <label for="name" class="form-label">Name</label>
           <input
@@ -34,7 +35,7 @@
           >
         </div>
 
-        <!-- Birthday (SINGLE FIELD, DD/MM/YY) -->
+        <!-- Birthday (DD/MM/YY) -->
         <div class="mb-3">
           <label for="birthday" class="form-label">Birthday</label>
           <input
@@ -46,11 +47,11 @@
             value="{% if employee.birthday %}{{ employee.birthday.strftime('%d/%m/%y') }}{% endif %}"
           >
           <div class="form-text">
-            Format: DD/MM/YY (preferred). Also accepts DD/MM/YYYY or YYYY-MM-DD.
+            Preferred format: DD/MM/YY (e.g., 22/07/78). Also accepted: DD/MM/YYYY or YYYY-MM-DD.
           </div>
         </div>
 
-        <!-- Start / End dates (DD/MM/YY) -->
+        <!-- Employment dates (DD/MM/YY) -->
         <div class="row g-3">
           <div class="col-md-6">
             <label for="start_date" class="form-label">Start date</label>
@@ -80,26 +81,23 @@
           </div>
         </div>
 
+        <!-- Reporting manager -->
         <div class="mb-3 mt-3">
           <label for="reporting_manager_id" class="form-label">Reporting manager</label>
-          <select
-            id="reporting_manager_id"
-            name="reporting_manager_id"
-            class="form-select"
-          >
+          <select id="reporting_manager_id" name="reporting_manager_id" class="form-select">
             <option value="">-- None --</option>
             {% for m in manager_employees|sort(attribute="name") %}
-              <option value="{{ m.id }}"
-                {% if employee.reporting_manager_id == m.id %}selected{% endif %}>
+              <option value="{{ m.id }}" {% if employee.reporting_manager_id == m.id %}selected{% endif %}>
                 {{ m.name }}
               </option>
             {% endfor %}
           </select>
           <div class="form-text">
-            This manager will receive email notifications for this employee's leave requests.
+            This manager will receive email notifications for this employee’s leave requests.
           </div>
         </div>
 
+        <!-- Active -->
         <div class="form-check mb-3">
           <input
             class="form-check-input"
@@ -109,16 +107,20 @@
             {% if employee.active %}checked{% endif %}
           >
           <label class="form-check-label" for="active">
-            Active (show in calendars)
+            Active
           </label>
+        </div>
+
+        <div class="text-muted small">
+          Note: “Active” controls operational visibility. Calendar visibility is determined by Start/End dates.
         </div>
       </div>
 
-      <div class="col-md-6">
-        <h2 class="h5">Leave days</h2>
-        <p class="text-muted">
-          Set or update leave days for a specific year. If the year already exists,
-          its leave days will be updated; otherwise a new record will be created.
+      <!-- RIGHT: Leave days -->
+      <div class="col-lg-6">
+        <h2 class="h5 mb-3">Leave days</h2>
+        <p class="text-muted mb-3">
+          Set or update leave days for a specific year. If the year already exists, it will be updated.
         </p>
 
         <div class="row g-3 align-items-end">
@@ -132,6 +134,7 @@
               value="{{ current_year }}"
             >
           </div>
+
           <div class="col-4">
             <label for="ent_days" class="form-label">Leave days</label>
             <input
@@ -143,6 +146,7 @@
               value="{{ current_year_ent_days }}"
             >
           </div>
+
           <div class="col-4 text-end">
             <button type="submit" class="btn btn-primary">
               Save
@@ -152,19 +156,22 @@
 
         <hr class="my-4">
 
-        <h3 class="h6">All leave days</h3>
+        <h3 class="h6 mb-2">All leave days</h3>
 
         {% if employee.entitlements %}
           <ul class="list-unstyled mb-0">
             {% for ent in employee.entitlements|sort(attribute="year") %}
-              <li class="d-flex align-items-center justify-content-between mb-1">
+              <li class="d-flex align-items-center justify-content-between mb-2">
                 <span>
-                  {{ ent.year }}: {{ "%.1f"|format(ent.days) }} days
+                  <strong>{{ ent.year }}</strong>: {{ "%.1f"|format(ent.days) }} days
                 </span>
-                <form action="{{ url_for('delete_entitlement', employee_id=employee.id, year=ent.year) }}"
-                      method="post"
-                      class="ms-2"
-                      onsubmit="return confirm('Remove entitlement and any leave entries for {{ ent.year }}?');">
+
+                <form
+                  action="{{ url_for('delete_entitlement', employee_id=employee.id, year=ent.year) }}"
+                  method="post"
+                  class="ms-2"
+                  onsubmit="return confirm('Remove entitlement (and any leave entries) for {{ ent.year }}?');"
+                >
                   <button type="submit" class="btn btn-outline-danger btn-sm">
                     Remove
                   </button>
