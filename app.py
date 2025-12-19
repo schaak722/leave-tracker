@@ -8,11 +8,11 @@ from sqlalchemy import and_, or_
 import smtplib
 from email.message import EmailMessage
 
-
 from flask import (
     Flask, render_template, request, redirect,
-    url_for, session, g, jsonify, abort
+    url_for, session, g, jsonify, abort, flash
 )
+
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
