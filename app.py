@@ -1103,8 +1103,28 @@ def manage_employees():
     if not g.is_admin:
         return redirect(url_for("login"))
 
-    employees = Employee.query.order_by(Employee.name).all()
-    return render_template("manage_employees.html", employees=employees)
+    show_archived = (request.args.get("show_archived") or "").strip() in ("1", "true", "yes", "on")
+
+    if show_archived:
+        employees = (
+            Employee.query
+            .filter(Employee.active.is_(False))
+            .order_by(Employee.name)
+            .all()
+        )
+    else:
+        employees = (
+            Employee.query
+            .filter(Employee.active.is_(True))
+            .order_by(Employee.name)
+            .all()
+        )
+
+    return render_template(
+        "manage_employees.html",
+        employees=employees,
+        show_archived=show_archived,
+    )
 
 @app.route("/admin/employee/<int:employee_id>/edit", methods=["GET", "POST"])
 def edit_employee(employee_id):
@@ -1258,13 +1278,13 @@ def delete_employee(employee_id):
 
     emp = Employee.query.get_or_404(employee_id)
 
-    # Delete entitlements and leave entries first
-    for ent in list(emp.entitlements):
-        db.session.delete(ent)
-    for entry in list(emp.leave_entries):
-        db.session.delete(entry)
+    # Archive (do not delete)
+    emp.active = False
 
-    db.session.delete(emp)
+    # Recommended: disable any linked login accounts
+    for u in list(emp.users):
+        u.active = False
+
     db.session.commit()
 
     return redirect(url_for("manage_employees"))
