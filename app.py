@@ -1308,6 +1308,11 @@ def delete_employee(employee_id):
 
     emp = Employee.query.get_or_404(employee_id)
 
+    # Enforce end_date before archiving
+    if emp.end_date is None:
+        flash("Please set an End date before archiving this user.", "warning")
+        return redirect(url_for("edit_employee", employee_id=emp.id))
+
     # Archive (do not delete)
     emp.active = False
 
@@ -1317,6 +1322,7 @@ def delete_employee(employee_id):
 
     db.session.commit()
 
+    flash(f"{emp.name} has been archived.", "success")
     return redirect(url_for("manage_employees"))
 
 @app.route("/admin/employee/<int:employee_id>/restore", methods=["POST"])
