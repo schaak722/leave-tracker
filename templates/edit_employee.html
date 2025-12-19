@@ -16,10 +16,12 @@
     </div>
   {% endif %}
 
-  <form method="post" class="mb-4">
-    <div class="row g-4">
-      <!-- LEFT: Employee details -->
-      <div class="col-lg-6">
+  <div class="row g-4">
+    <!-- LEFT: Employee details form -->
+    <div class="col-lg-6">
+      <form method="post">
+        <input type="hidden" name="form_action" value="employee_details">
+
         <h2 class="h5 mb-3">Employee details</h2>
 
         <!-- Name -->
@@ -35,23 +37,19 @@
           >
         </div>
 
-        <!-- Birthday (DD/MM/YY) -->
+        <!-- Birthday (date picker) -->
         <div class="mb-3">
           <label for="birthday" class="form-label">Birthday</label>
-         <input
+          <input
             type="date"
             id="birthday"
             name="birthday"
             class="form-control"
             value="{% if employee.birthday %}{{ employee.birthday.isoformat() }}{% endif %}"
           >
-
-          <div class="form-text">
-            Preferred format: DD/MM/YY (e.g., 22/07/78). Also accepted: DD/MM/YYYY or YYYY-MM-DD.
-          </div>
         </div>
 
-        <!-- Employment dates (DD/MM/YY) -->
+        <!-- Start / End dates (date picker) -->
         <div class="row g-3">
           <div class="col-md-6">
             <label for="start_date" class="form-label">Start date</label>
@@ -66,14 +64,13 @@
 
           <div class="col-md-6">
             <label for="end_date" class="form-label">End date</label>
-           <input
+            <input
               type="date"
               id="end_date"
               name="end_date"
               class="form-control"
               value="{% if employee.end_date %}{{ employee.end_date.isoformat() }}{% endif %}"
             >
-
             <div class="form-text">
               Leave blank if the employee is still employed.
             </div>
@@ -110,17 +107,22 @@
           </label>
         </div>
 
-        <div class="text-muted small">
-          Note: “Active” controls operational visibility. Calendar visibility is determined by Start/End dates.
-        </div>
-      </div>
+        <!-- SAVE button (requested location) -->
+        <button type="submit" class="btn btn-primary">
+          Save
+        </button>
+      </form>
+    </div>
 
-      <!-- RIGHT: Leave days -->
-      <div class="col-lg-6">
-        <h2 class="h5 mb-3">Leave days</h2>
-        <p class="text-muted mb-3">
-          Set or update leave days for a specific year. If the year already exists, it will be updated.
-        </p>
+    <!-- RIGHT: Leave days form -->
+    <div class="col-lg-6">
+      <h2 class="h5 mb-3">Leave days</h2>
+      <p class="text-muted mb-3">
+        Add leave days for a specific year. If the year already exists, it will be updated.
+      </p>
+
+      <form method="post" class="mb-3">
+        <input type="hidden" name="form_action" value="add_entitlement">
 
         <div class="row g-3 align-items-end">
           <div class="col-4">
@@ -147,42 +149,42 @@
           </div>
 
           <div class="col-4 text-end">
-            <button type="submit" class="btn btn-primary">
-              Save
+            <button type="submit" class="btn btn-outline-primary">
+              Add
             </button>
           </div>
         </div>
+      </form>
 
-        <hr class="my-4">
+      <hr class="my-4">
 
-        <h3 class="h6 mb-2">All leave days</h3>
+      <h3 class="h6 mb-2">All leave days</h3>
 
-        {% if employee.entitlements %}
-          <ul class="list-unstyled mb-0">
-            {% for ent in employee.entitlements|sort(attribute="year") %}
-              <li class="d-flex align-items-center justify-content-between mb-2">
-                <span>
-                  <strong>{{ ent.year }}</strong>: {{ "%.1f"|format(ent.days) }} days
-                </span>
+      {% if employee.entitlements %}
+        <ul class="list-unstyled mb-0">
+          {% for ent in employee.entitlements|sort(attribute="year") %}
+            <li class="d-flex align-items-center justify-content-between mb-2">
+              <span>
+                <strong>{{ ent.year }}</strong>: {{ "%.1f"|format(ent.days) }} days
+              </span>
 
-                <form
-                  action="{{ url_for('delete_entitlement', employee_id=employee.id, year=ent.year) }}"
-                  method="post"
-                  class="ms-2"
-                  onsubmit="return confirm('Remove entitlement (and any leave entries) for {{ ent.year }}?');"
-                >
-                  <button type="submit" class="btn btn-outline-danger btn-sm">
-                    Remove
-                  </button>
-                </form>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p class="text-muted mb-0">No leave days defined.</p>
-        {% endif %}
-      </div>
+              <form
+                action="{{ url_for('delete_entitlement', employee_id=employee.id, year=ent.year) }}"
+                method="post"
+                class="ms-2"
+                onsubmit="return confirm('Remove entitlement (and any leave entries) for {{ ent.year }}?');"
+              >
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                  Remove
+                </button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted mb-0">No leave days defined.</p>
+      {% endif %}
     </div>
-  </form>
+  </div>
 </div>
 {% endblock %}
