@@ -38,14 +38,14 @@
         <!-- Birthday (DD/MM/YY) -->
         <div class="mb-3">
           <label for="birthday" class="form-label">Birthday</label>
-          <input
-            type="text"
+         <input
+            type="date"
             id="birthday"
             name="birthday"
             class="form-control"
-            placeholder="DD/MM/YY"
-            value="{% if employee.birthday %}{{ employee.birthday.strftime('%d/%m/%y') }}{% endif %}"
+            value="{% if employee.birthday %}{{ employee.birthday.isoformat() }}{% endif %}"
           >
+
           <div class="form-text">
             Preferred format: DD/MM/YY (e.g., 22/07/78). Also accepted: DD/MM/YYYY or YYYY-MM-DD.
           </div>
@@ -56,25 +56,24 @@
           <div class="col-md-6">
             <label for="start_date" class="form-label">Start date</label>
             <input
-              type="text"
+              type="date"
               id="start_date"
               name="start_date"
               class="form-control"
-              placeholder="DD/MM/YY"
-              value="{% if employee.start_date %}{{ employee.start_date.strftime('%d/%m/%y') }}{% endif %}"
+              value="{% if employee.start_date %}{{ employee.start_date.isoformat() }}{% endif %}"
             >
           </div>
 
           <div class="col-md-6">
             <label for="end_date" class="form-label">End date</label>
-            <input
-              type="text"
+           <input
+              type="date"
               id="end_date"
               name="end_date"
               class="form-control"
-              placeholder="DD/MM/YY"
-              value="{% if employee.end_date %}{{ employee.end_date.strftime('%d/%m/%y') }}{% endif %}"
+              value="{% if employee.end_date %}{{ employee.end_date.isoformat() }}{% endif %}"
             >
+
             <div class="form-text">
               Leave blank if the employee is still employed.
             </div>
