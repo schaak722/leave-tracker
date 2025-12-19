@@ -1208,114 +1208,115 @@ def edit_employee(employee_id):
     if emp.reporting_manager and emp.reporting_manager not in manager_employees:
         manager_employees.append(emp.reporting_manager)
 
- if request.method == "POST":
-    form_action = (request.form.get("form_action") or "").strip()
+    if request.method == "POST":
+        form_action = (request.form.get("form_action") or "").strip()
 
-    # -------------------------
-    # A) Save employee details
-    # -------------------------
-    if form_action == "employee_details":
-        name = request.form.get("name", "").strip()
-        active = True if request.form.get("active") == "on" else False
+        # -------------------------
+        # A) Save employee details
+        # -------------------------
+        if form_action == "employee_details":
+            name = request.form.get("name", "").strip()
+            active = True if request.form.get("active") == "on" else False
 
-        birthday_str = request.form.get("birthday", "").strip()
-        start_date_str = request.form.get("start_date", "").strip()
-        end_date_str = request.form.get("end_date", "").strip()
+            birthday_str = request.form.get("birthday", "").strip()
+            start_date_str = request.form.get("start_date", "").strip()
+            end_date_str = request.form.get("end_date", "").strip()
 
-        reporting_manager_id_str = (request.form.get("reporting_manager_id") or "").strip()
+            reporting_manager_id_str = (request.form.get("reporting_manager_id") or "").strip()
 
-        # --- validate name ---
-        if not name:
-            error = "Name is required"
-        else:
-            existing = (
-                Employee.query
-                .filter(Employee.name == name, Employee.id != emp.id)
-                .first()
-            )
-            if existing:
-                error = "Another employee with that name already exists."
-
-        # --- apply changes if no errors ---
-        if not error:
-            emp.name = name
-            emp.active = active
-
-            # Dates (type="date" posts YYYY-MM-DD; parse_date_input supports this)
-            bday = parse_birthday(birthday_str)
-            if birthday_str and not bday:
-                error = "Invalid birthday date."
+            # Validate name
+            if not name:
+                error = "Name is required"
             else:
-                emp.birthday = bday if bday else None
+                existing = (
+                    Employee.query
+                    .filter(Employee.name == name, Employee.id != emp.id)
+                    .first()
+                )
+                if existing:
+                    error = "Another employee with that name already exists."
 
-            sd = parse_date_input(start_date_str)
-            ed = parse_date_input(end_date_str)
+            if not error:
+                emp.name = name
+                emp.active = active
 
-            if start_date_str and not sd:
-                error = "Invalid start date."
-            elif end_date_str and not ed:
-                error = "Invalid end date."
-            elif sd and ed and ed < sd:
-                error = "End date cannot be earlier than start date."
-            else:
-                emp.start_date = sd if sd else None
-                emp.end_date = ed if ed else None
+                # Birthday
+                bday = parse_birthday(birthday_str)
+                if birthday_str and not bday:
+                    error = "Invalid birthday date."
+                else:
+                    emp.birthday = bday if bday else None
 
-            # Reporting manager (nullable)
-            if reporting_manager_id_str:
-                try:
-                    emp.reporting_manager_id = int(reporting_manager_id_str)
-                except ValueError:
+                # Employment dates
+                sd = parse_date_input(start_date_str)
+                ed = parse_date_input(end_date_str)
+
+                if start_date_str and not sd:
+                    error = "Invalid start date."
+                elif end_date_str and not ed:
+                    error = "Invalid end date."
+                elif sd and ed and ed < sd:
+                    error = "End date cannot be earlier than start date."
+                else:
+                    emp.start_date = sd if sd else None
+                    emp.end_date = ed if ed else None
+
+                # Reporting manager (nullable)
+                if reporting_manager_id_str:
+                    try:
+                        emp.reporting_manager_id = int(reporting_manager_id_str)
+                    except ValueError:
+                        emp.reporting_manager_id = None
+                else:
                     emp.reporting_manager_id = None
+
+            if not error:
+                db.session.commit()
+                return redirect(url_for("manage_employees"))
+
+        # -------------------------
+        # B) Add/Update entitlement
+        # -------------------------
+        elif form_action == "add_entitlement":
+            ent_year_str = request.form.get("ent_year", "").strip()
+            ent_days_str = request.form.get("ent_days", "").strip()
+
+            if not ent_year_str or not ent_days_str:
+                error = "Please enter both Year and Leave days."
             else:
-                emp.reporting_manager_id = None
+                try:
+                    ent_year = int(ent_year_str)
+                    ent_days = float(ent_days_str)
+                except ValueError:
+                    error = "Invalid year or leave days."
 
-        if not error:
-            db.session.commit()
-            return redirect(url_for("manage_employees"))
+            if not error:
+                ent = (
+                    Entitlement.query
+                    .filter_by(employee_id=emp.id, year=ent_year)
+                    .first()
+                )
+                if ent:
+                    ent.days = ent_days
+                else:
+                    db.session.add(
+                        Entitlement(employee_id=emp.id, year=ent_year, days=ent_days)
+                    )
 
-    # -------------------------
-    # B) Add/Update entitlement
-    # -------------------------
-    elif form_action == "add_entitlement":
-        ent_year_str = request.form.get("ent_year", "").strip()
-        ent_days_str = request.form.get("ent_days", "").strip()
+                db.session.commit()
+                return redirect(url_for("edit_employee", employee_id=emp.id))
 
-        # --- validate entitlement inputs ---
-        if not ent_year_str or not ent_days_str:
-            error = "Please enter both Year and Leave days."
+            # Keep what user typed if there was an error
+            if ent_year_str:
+                try:
+                    current_year = int(ent_year_str)
+                except ValueError:
+                    pass
+            if ent_days_str:
+                current_year_ent_days = ent_days_str
+
         else:
-            try:
-                ent_year = int(ent_year_str)
-                ent_days = float(ent_days_str)
-            except ValueError:
-                error = "Invalid year or leave days."
-
-        if not error:
-            ent = (
-                Entitlement.query
-                .filter_by(employee_id=emp.id, year=ent_year)
-                .first()
-            )
-            if ent:
-                ent.days = ent_days
-            else:
-                db.session.add(Entitlement(employee_id=emp.id, year=ent_year, days=ent_days))
-
-            db.session.commit()
-            return redirect(url_for("edit_employee", employee_id=emp.id))
-
-        # Keep the entitlement fields populated if there was an error
-        if ent_year_str:
-            try:
-                current_year = int(ent_year_str)
-            except ValueError:
-                pass
-        if ent_days_str:
-            current_year_ent_days = ent_days_str
-
-    else:
-        error = "Unknown form submission."
+            error = "Unknown form submission."
 
     return render_template(
         "edit_employee.html",
@@ -1325,6 +1326,7 @@ def edit_employee(employee_id):
         current_year_ent_days=current_year_ent_days,
         manager_employees=manager_employees,
     )
+
 
 @app.route("/admin/employee/<int:employee_id>/entitlement/<int:year>/delete", methods=["POST"])
 def delete_entitlement(employee_id, year):
