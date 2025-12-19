@@ -129,6 +129,9 @@ class Employee(db.Model):
     name = db.Column(db.String(100), unique=True, nullable=False)
     active = db.Column(db.Boolean, default=True)
     birthday = db.Column(db.Date, nullable=True)  # Birthday stored on the employee
+    start_date = db.Column(db.Date, nullable=True)  # Employment start
+    end_date = db.Column(db.Date, nullable=True)    # Employment end (nullable)
+
 
     # Optional reporting manager (another Employee)
     reporting_manager_id = db.Column(
@@ -421,15 +424,34 @@ def compute_employee_year_summary(employee_id: int, year: int):
 
     return entitlement_days, taken, remaining
 
+def parse_date_input(date_str: str):
+    """
+    Parse dates from common UI formats.
+    Primary format for this change: DD/MM/YY
+    Also accepts: DD/MM/YYYY, DD-MM-YY, DD-MM-YYYY, YYYY-MM-DD
+    Returns a date or None.
+    """
+    date_str = (date_str or "").strip()
+    if not date_str:
+        return None
+
+    formats = ["%d/%m/%y", "%d/%m/%Y", "%d-%m-%y", "%d-%m-%Y", "%Y-%m-%d"]
+    for fmt in formats:
+        try:
+            return datetime.strptime(date_str, fmt).date()
+        except ValueError:
+            continue
+
+    return None
+    
 def parse_birthday(birthday_str: str):
     """
-    Try to parse a birthday from several common formats.
-    Returns a date object or None.
-    Accepts:
-      - 1978-07-22
-      - 22/07/1978
-      - 22-07-1978
+    Backwards compatible birthday parsing.
+    Primary format: DD/MM/YY
+    Also accepts: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, etc.
     """
+    return parse_date_input(birthday_str)
+
     birthday_str = (birthday_str or "").strip()
     if not birthday_str:
         return None
@@ -1190,6 +1212,8 @@ def edit_employee(employee_id):
         name = request.form.get("name", "").strip()
         active = True if request.form.get("active") == "on" else False
         birthday_str = request.form.get("birthday", "").strip()
+        start_date_str = request.form.get("start_date", "").strip()
+        end_date_str = request.form.get("end_date", "").strip()
         ent_year_str = request.form.get("ent_year", "").strip()
         ent_days_str = request.form.get("ent_days", "").strip()
         reporting_manager_id_str = (request.form.get("reporting_manager_id") or "").strip()
@@ -1222,9 +1246,21 @@ def edit_employee(employee_id):
             emp.name = name
             emp.active = active
 
-            # Parse and set birthday
+            # Parse and set birthday (DD/MM/YY preferred)
             bday = parse_birthday(birthday_str)
             emp.birthday = bday if bday else None
+
+            # Parse and set employment dates (DD/MM/YY preferred)
+            sd = parse_date_input(start_date_str)
+            ed = parse_date_input(end_date_str)
+
+            # Basic validation: if end_date provided, it can't be before start_date
+            if sd and ed and ed < sd:
+                error = "End date cannot be earlier than start date."
+            else:
+                emp.start_date = sd if sd else None
+                emp.end_date = ed if ed else None
+
 
             # Reporting manager (nullable)
             if reporting_manager_id_str:
@@ -1252,8 +1288,10 @@ def edit_employee(employee_id):
                     )
                     db.session.add(ent)
 
-            db.session.commit()
-            return redirect(url_for("manage_employees"))
+                if not error:
+                db.session.commit()
+                return redirect(url_for("manage_employees"))
+
 
         # If there was an error, keep what user typed for ent fields
         if ent_year_str:
