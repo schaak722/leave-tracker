@@ -1301,8 +1301,8 @@ def delete_entitlement(employee_id, year):
 
     return redirect(url_for("edit_employee", employee_id=emp.id))
 
-@app.route("/admin/employee/<int:employee_id>/delete", methods=["POST"])
-def delete_employee(employee_id):
+@app.route("/admin/employee/<int:employee_id>/archive", methods=["POST"])
+def archive_employee(employee_id):
     if not g.is_admin:
         return redirect(url_for("login"))
 
@@ -1313,10 +1313,9 @@ def delete_employee(employee_id):
         flash("Please set an End date before archiving this user.", "warning")
         return redirect(url_for("edit_employee", employee_id=emp.id))
 
-    # Archive (do not delete)
     emp.active = False
 
-    # Recommended: disable any linked login accounts
+    # Recommended: disable linked logins
     for u in list(emp.users):
         u.active = False
 
