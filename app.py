@@ -1289,6 +1289,24 @@ def delete_employee(employee_id):
 
     return redirect(url_for("manage_employees"))
 
+@app.route("/admin/employee/<int:employee_id>/restore", methods=["POST"])
+def restore_employee(employee_id):
+    if not g.is_admin:
+        return redirect(url_for("login"))
+
+    emp = Employee.query.get_or_404(employee_id)
+
+    # Restore (un-archive)
+    emp.active = True
+
+    # Recommended: re-enable linked login accounts
+    for u in list(emp.users):
+        u.active = True
+
+    db.session.commit()
+
+    return redirect(url_for("manage_employees", show_archived=1))
+
 @app.route("/admin/users", methods=["GET"])
 def manage_users():
     if not g.is_admin:
