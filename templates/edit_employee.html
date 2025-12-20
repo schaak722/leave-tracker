@@ -103,7 +103,7 @@
 
           <div class="col-md-6">
             <label for="reporting_manager_id" class="form-label">Reporting manager</label>
-            <<select id="reporting_manager_id" name="reporting_manager_id" class="form-select rounded-pill">
+            <select id="reporting_manager_id" name="reporting_manager_id" class="form-select rounded-pill">
               <option value="">-- None --</option>
               {% for m in manager_employees %}
                 <option value="{{ m.id }}" {% if employee.reporting_manager_id == m.id %}selected{% endif %}>
