@@ -372,6 +372,20 @@ input[type="submit"] {
   border-color: var(--accent);
 }
 
+/* Make Bootstrap selects match the pill inputs */
+.form-select.rounded-pill {
+  border-radius: 9999px;
+  /* Match your input padding/height visually */
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  padding-left: 1rem;
+  padding-right: 2.5rem; /* room for the dropdown arrow */
+}
+
+/* Optional: match focus style if your inputs have a custom one */
+.form-select.rounded-pill:focus {
+  box-shadow: none; /* or match your existing input focus */
+}
 
 /* ===========================
    Year dropdown (Bootstrap)
