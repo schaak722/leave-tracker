@@ -372,14 +372,21 @@ input[type="submit"] {
   border-color: var(--accent);
 }
 
-/* Make Bootstrap selects match the pill inputs */
+/* Make Bootstrap selects match the pill inputs (typography + height) */
 .form-select.rounded-pill {
   border-radius: 9999px;
-  /* Match your input padding/height visually */
-  padding-top: 0.6rem;
-  padding-bottom: 0.6rem;
-  padding-left: 1rem;
-  padding-right: 2.5rem; /* room for the dropdown arrow */
+
+  /* Match input typography */
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+
+  /* Match Bootstrap .form-control sizing */
+  min-height: calc(1.5em + 0.75rem + 2px);
+
+  /* Match input padding feel, keep room for arrow */
+  padding: 0.375rem 2.5rem 0.375rem 1rem;
 }
 
 /* Optional: match focus style if your inputs have a custom one */
