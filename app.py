@@ -1073,6 +1073,7 @@ def update_cell():
 # Admin: add / update entitlement (and birthday)
 # ---------------------------
 
+@app.route("/admin/add_employee", methods=["GET", "POST"], endpoint="add_employee"
 def add_employee():
     """
     If name exists: update leave days (entitlement) for that year.
