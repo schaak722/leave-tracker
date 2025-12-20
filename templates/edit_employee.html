@@ -24,17 +24,31 @@
 
         <h2 class="h5 mb-3">Employee details</h2>
 
-        <!-- Name -->
-        <div class="mb-3">
-          <label for="name" class="form-label">Name</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            class="form-control"
-            value="{{ employee.name }}"
-            required
-          >
+        <!-- First / Last name -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="first_name" class="form-label">First name</label>
+            <input
+              type="text"
+              id="first_name"
+              name="first_name"
+              class="form-control"
+              value="{{ first_name_value }}"
+              required
+            >
+          </div>
+
+          <div class="col-md-6">
+            <label for="last_name" class="form-label">Last name</label>
+            <input
+              type="text"
+              id="last_name"
+              name="last_name"
+              class="form-control"
+              value="{{ last_name_value }}"
+              required
+            >
+          </div>
         </div>
 
         <!-- Birthday (date picker) -->
@@ -48,8 +62,8 @@
             value="{% if employee.birthday %}{{ employee.birthday.isoformat() }}{% endif %}"
           >
         </div>
-
-        <!-- Start / End dates (date picker) -->
+        
+        <!-- Start / End dates + Department (date picker) -->
         <div class="row g-3">
           <div class="col-md-6">
             <label for="start_date" class="form-label">Start date</label>
@@ -60,7 +74,6 @@
               class="form-control"
               value="{% if employee.start_date %}{{ employee.start_date.isoformat() }}{% endif %}"
             >
-          </div>
 
           <div class="col-md-6">
             <label for="end_date" class="form-label">End date</label>
@@ -71,9 +84,18 @@
               class="form-control"
               value="{% if employee.end_date %}{{ employee.end_date.isoformat() }}{% endif %}"
             >
-            <div class="form-text">
-              Leave blank if the employee is still employed.
-            </div>
+          </div>
+        </div>
+
+          <div class="mt-3">
+            <label for="department" class="form-label">Department</label>
+            <input
+              type="text"
+              id="department"
+              name="department"
+              class="form-control"
+              value="{{ department_value }}"
+              >
           </div>
         </div>
 
