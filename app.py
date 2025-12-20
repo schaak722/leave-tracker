@@ -1073,11 +1073,11 @@ def update_cell():
 # Admin: add / update entitlement (and birthday)
 # ---------------------------
 
-@app.route("/admin/add_employee", methods=["GET", "POST"], endpoint="add_employee"
+@app.route("/admin/add_employee", methods=["GET", "POST"], endpoint="add_employee")
 def add_employee():
     """
-    If name exists: update leave days (entitlement) for that year.
-    If not: create employee + leave days record.
+    Add / update employee and entitlement for a year.
+    Uses split name fields but keeps Employee.name as the canonical display field.
     """
     if not g.is_admin:
         return redirect(url_for("login"))
@@ -1087,63 +1087,63 @@ def add_employee():
         last_name = (request.form.get("last_name") or "").strip()
         department = (request.form.get("department") or "").strip()
 
-        name = f"{first_name} {last_name}".strip()
+        full_name = f"{first_name} {last_name}".strip()
 
-        year = int(request.form.get("year"))
-        entitlement_days = float(request.form.get("entitlement_days"))
-        birthday_str = request.form.get("birthday", "").strip()
+        year_str = (request.form.get("year") or "").strip()
+        days_str = (request.form.get("entitlement_days") or "").strip()
+        birthday_str = (request.form.get("birthday") or "").strip()
 
         if not first_name:
-            return render_template(
-                "base.html",
-                content="<p class='text-danger'>First name is required</p>",
-            )
+            flash("First name is required.", "warning")
+            return redirect(url_for("add_employee"))
+
         if not last_name:
-            return render_template(
-                "base.html",
-                content="<p class='text-danger'>Last name is required</p>",
-            )
+            flash("Last name is required.", "warning")
+            return redirect(url_for("add_employee"))
 
-        # Reuse existing employee if same full name
-        emp = Employee.query.filter_by(name=name).first()
-        if emp:
-            emp.first_name = first_name
-            emp.last_name = last_name
-            emp.department = department if department else None
-            emp.name = name
+        try:
+            year = int(year_str)
+            entitlement_days = float(days_str)
+        except ValueError:
+            flash("Invalid year or leave days.", "warning")
+            return redirect(url_for("add_employee"))
 
+        emp = Employee.query.filter_by(name=full_name).first()
         if not emp:
             emp = Employee(
-                name=name,
+                name=full_name,
                 first_name=first_name,
                 last_name=last_name,
                 department=department if department else None,
                 active=True
             )
             db.session.add(emp)
-            db.session.flush()  # get emp.id
+            db.session.flush()
+        else:
+            # Keep split fields in sync if employee already exists
+            emp.first_name = first_name
+            emp.last_name = last_name
+            emp.department = department if department else None
+            emp.name = full_name
 
-        # Parse and set birthday if provided
-        bday = parse_birthday(birthday_str)
-        if birthday_str and not bday:
-            return render_template(
-                "base.html",
-                content="<p class='text-danger'>Invalid birthday date</p>",
-            )
-        emp.birthday = bday if birthday_str else None
+        # Birthday (optional)
+        if birthday_str:
+            bday = parse_birthday(birthday_str)
+            if not bday:
+                flash("Invalid birthday date.", "warning")
+                return redirect(url_for("add_employee"))
+            emp.birthday = bday
+        else:
+            emp.birthday = None
 
         ent = Entitlement.query.filter_by(employee_id=emp.id, year=year).first()
         if ent:
             ent.days = entitlement_days
         else:
-            ent = Entitlement(
-                employee_id=emp.id,
-                year=year,
-                days=entitlement_days,
-            )
-            db.session.add(ent)
+            db.session.add(Entitlement(employee_id=emp.id, year=year, days=entitlement_days))
 
         db.session.commit()
+        flash("Employee and leave days saved.", "success")
         return redirect(url_for("manage_employees"))
 
     current_year = datetime.now().year
@@ -1151,43 +1151,42 @@ def add_employee():
         "base.html",
         content=f"""
         <h2>Add / Update Leave Days</h2>
-        <p>If the employee already exists, this will <strong>update</strong> their leave days for that year.</p>
 
-        <form method='post'>
+        <form method='post' class='mt-3'>
             <div class='row'>
               <div class='col-md-6 mb-3'>
-                <label class='form-label'>First name:
+                <label class='form-label'>First name
                   <input type='text' name='first_name' class='form-control' required>
                 </label>
               </div>
               <div class='col-md-6 mb-3'>
-                <label class='form-label'>Last name:
+                <label class='form-label'>Last name
                   <input type='text' name='last_name' class='form-control' required>
                 </label>
               </div>
             </div>
 
             <div class='mb-3'>
-              <label class='form-label'>Department:
+              <label class='form-label'>Department
                 <input type='text' name='department' class='form-control'>
               </label>
             </div>
 
             <div class='mb-3'>
-              <label class='form-label'>Birthday:
+              <label class='form-label'>Birthday
                 <input type='date' name='birthday' class='form-control'>
               </label>
             </div>
 
             <div class='mb-3'>
-              <label class='form-label'>Year:
-                <input type='number' name='year' value='{current_year}' class='form-control'>
+              <label class='form-label'>Year
+                <input type='number' name='year' value='{current_year}' class='form-control' required>
               </label>
             </div>
 
             <div class='mb-3'>
-              <label class='form-label'>Leave days:
-                <input type='number' step='0.5' name='entitlement_days' class='form-control'>
+              <label class='form-label'>Leave days
+                <input type='number' step='0.5' name='entitlement_days' class='form-control' required>
               </label>
             </div>
 
@@ -1198,7 +1197,6 @@ def add_employee():
         </form>
         """,
     )
-
 # ---------------------------
 # Admin: manage employees (list / edit / delete)
 # ---------------------------
