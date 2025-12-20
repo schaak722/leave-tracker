@@ -378,7 +378,7 @@ input[type="submit"] {
 
   /* Match input typography */
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 400;
   line-height: 1.5;
 
