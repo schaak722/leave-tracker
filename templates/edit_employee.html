@@ -88,33 +88,32 @@
           </div>
         </div>
 
-        <!-- Department (under Start/End) -->
-        <div class="mb-3">
-          <label for="department" class="form-label">Department</label>
-          <input
-            type="text"
-            id="department"
-            name="department"
-            class="form-control"
-            value="{{ department_value }}"
-          >
-        </div>
+        <!-- Department + Reporting manager (inline, equal width) -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="department" class="form-label">Department</label>
+            <input
+              type="text"
+              id="department"
+              name="department"
+              class="form-control"
+              value="{{ department_value }}"
+            >
+          </div>
 
-        <!-- Reporting manager -->
-        <div class="mb-3 mt-3">
-          <label for="reporting_manager_id" class="form-label">Reporting manager</label>
-          <select id="reporting_manager_id" name="reporting_manager_id" class="form-select">
-            <option value="">-- None --</option>
-            {% for m in manager_employees|sort(attribute="name") %}
-              <option value="{{ m.id }}" {% if employee.reporting_manager_id == m.id %}selected{% endif %}>
-                {{ m.name }}
-              </option>
-            {% endfor %}
-          </select>
-          <div class="form-text">
-            This manager will receive email notifications for this employee’s leave requests.
+          <div class="col-md-6">
+            <label for="reporting_manager_id" class="form-label">Reporting manager</label>
+            <select id="reporting_manager_id" name="reporting_manager_id" class="form-select">
+              <option value="">-- None --</option>
+              {% for m in manager_employees %}
+                <option value="{{ m.id }}" {% if employee.reporting_manager_id == m.id %}selected{% endif %}>
+                  {{ m.name }}
+                </option>
+              {% endfor %}
+            </select>
           </div>
         </div>
+
 
         <!-- Active -->
         <div class="form-check mb-3">
