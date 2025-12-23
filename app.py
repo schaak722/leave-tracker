@@ -127,23 +127,25 @@ def ensure_admin_user():
 class Employee(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    # Legacy full-name field kept as the canonical display + unique identifier across the app
-    # (Most templates/routes still use employee.name.)
+    # Legacy full-name field kept as canonical display + uniqueness across app
     name = db.Column(db.String(100), unique=True, nullable=False)
 
-    # New split fields (UI now captures these); nullable for backwards compatibility with existing rows.
+    # New split fields (nullable for backwards compatibility)
     first_name = db.Column(db.String(100), nullable=True)
     last_name = db.Column(db.String(100), nullable=True)
 
-    # Optional metadata
+    # Metadata
     department = db.Column(db.String(100), nullable=True)
 
-    active = db.Column(db.Boolean, default=True)
-    birthday = db.Column(db.Date, nullable=True)  # Birthday stored on the employee
-    start_date = db.Column(db.Date, nullable=True)  # Employment start
-    end_date = db.Column(db.Date, nullable=True)    # Employment end (nullable)
+    # Role: employee | manager | admin
+    role = db.Column(db.String(20), nullable=False, default="employee")
 
-    # Optional reporting manager (another Employee)
+    active = db.Column(db.Boolean, default=True)
+    birthday = db.Column(db.Date, nullable=True)
+    start_date = db.Column(db.Date, nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
+
+    # Reporting manager (another Employee)
     reporting_manager_id = db.Column(
         db.Integer,
         db.ForeignKey("employee.id"),
@@ -157,6 +159,7 @@ class Employee(db.Model):
 
     def __repr__(self):
         return f"<Employee {self.name}>"
+
 
 class Entitlement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1246,7 +1249,7 @@ def edit_employee(employee_id):
     )
     current_year_ent_days = ent_for_current_year.days if ent_for_current_year else ""
 
-    # Managers = Employees who have an active manager user
+    # Managers list (keep your existing behaviour for now)
     manager_employees = (
         Employee.query
         .join(User, User.employee_id == Employee.id)
@@ -1255,7 +1258,7 @@ def edit_employee(employee_id):
         .all()
     )
 
-    # Ensure current reporting manager (if any) is in the list even if their user changed
+    # Ensure current reporting manager (if any) is in the list
     if emp.reporting_manager and emp.reporting_manager not in manager_employees:
         manager_employees.append(emp.reporting_manager)
 
@@ -1270,7 +1273,12 @@ def edit_employee(employee_id):
             last_name = (request.form.get("last_name") or "").strip()
             department = (request.form.get("department") or "").strip()
 
-            # Keep legacy full-name field up to date for the rest of the app
+            # New: role on Employee
+            role = (request.form.get("role") or "employee").strip().lower()
+            if role not in ("employee", "manager", "admin"):
+                error = "Invalid role."
+
+            # Keep legacy full-name field up to date
             full_name = f"{first_name} {last_name}".strip()
 
             active = True if request.form.get("active") == "on" else False
@@ -1282,28 +1290,30 @@ def edit_employee(employee_id):
             reporting_manager_id_str = (request.form.get("reporting_manager_id") or "").strip()
 
             # Validate name fields
-            if not first_name:
-                error = "First name is required."
-            elif not last_name:
-                error = "Last name is required."
-            else:
-                existing = (
-                    Employee.query
-                    .filter(Employee.name == full_name, Employee.id != emp.id)
-                    .first()
-                )
-                if existing:
-                    error = "Another employee with that name already exists."
+            if not error:
+                if not first_name:
+                    error = "First name is required."
+                elif not last_name:
+                    error = "Last name is required."
+                else:
+                    existing = (
+                        Employee.query
+                        .filter(Employee.name == full_name, Employee.id != emp.id)
+                        .first()
+                    )
+                    if existing:
+                        error = "Another employee with that name already exists."
 
             if not error:
                 emp.first_name = first_name
                 emp.last_name = last_name
                 emp.department = department if department else None
+                emp.role = role
 
                 emp.name = full_name
                 emp.active = active
 
-                # Parse and set birthday if provided
+                # Birthday
                 if birthday_str:
                     bday = parse_birthday(birthday_str)
                     if not bday:
@@ -1338,12 +1348,18 @@ def edit_employee(employee_id):
 
                 if not error:
                     db.session.commit()
+                    flash("Employee details saved.", "success")
                     return redirect(url_for("manage_employees"))
 
         # -------------------------
         # B) Add / update entitlement
         # -------------------------
         elif form_action == "add_entitlement":
+            # New rule: admins do not have leave days allocated (server-side enforcement)
+            if (emp.role or "").lower() == "admin":
+                flash("Admins do not have leave days allocated.", "warning")
+                return redirect(url_for("edit_employee", employee_id=emp.id))
+
             ent_year_str = (request.form.get("entitlement_year") or "").strip()
             ent_days_str = (request.form.get("entitlement_days") or "").strip()
 
@@ -1369,12 +1385,13 @@ def edit_employee(employee_id):
                     db.session.add(ent)
 
                 db.session.commit()
+                flash("Leave days saved.", "success")
                 return redirect(url_for("edit_employee", employee_id=emp.id))
 
         else:
             error = "Unknown form submission."
 
-    # Values for split-name fields (use existing split values, or derive from legacy emp.name for old records)
+    # Split-name values for display (derive from emp.name for legacy rows)
     first_name_value = emp.first_name or ""
     last_name_value = emp.last_name or ""
     if not first_name_value and not last_name_value and emp.name:
@@ -1386,6 +1403,10 @@ def edit_employee(employee_id):
             last_name_value = parts[-1]
 
     department_value = emp.department or ""
+
+    # Ensure role has a safe display value even if older rows exist
+    if not emp.role:
+        emp.role = "employee"
 
     return render_template(
         "edit_employee.html",
