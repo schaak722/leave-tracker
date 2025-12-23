@@ -201,7 +201,7 @@
         <p class="text-muted mb-3">
           Add leave days for a specific year. If the year already exists, it will be updated.
         </p>
-
+      {% if (employee.role or 'employee')|lower != 'admin' %}
         <form method="post" class="mb-3">
           <input type="hidden" name="form_action" value="add_entitlement">
 
@@ -219,7 +219,11 @@
                 required
               >
             </div>
-
+          {% else %}
+            <div class="alert alert-info">
+              Admin users do not have leave days allocated.
+            </div>
+          {% endif %}            
             <div class="col-md-4">
               <label for="entitlement_days" class="form-label">Leave days</label>
               <input
@@ -252,14 +256,11 @@
                     <div>
                       <strong>{{ ent.year }}</strong> - {{ ent.days }} days
                     </div>
-
-                    <form method="post" class="mb-0">
-                      <input type="hidden" name="form_action" value="delete_entitlement">
-                      <input type="hidden" name="entitlement_year" value="{{ ent.year }}">
-                      <button type="submit" class="btn btn-outline-danger btn-sm">
-                        Remove
-                      </button>
-                    </form>
+          <form method="post" action="{{ url_for('delete_entitlement', employee_id=employee.id, year=ent.year) }}" class="mb-0">
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+              Remove
+            </button>
+          </form>
                   </li>
                 {% endfor %}
               </ul>
