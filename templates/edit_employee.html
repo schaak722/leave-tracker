@@ -19,122 +19,161 @@
   <div class="row g-4">
     <!-- LEFT: Employee details form -->
     <div class="col-lg-6">
-      <form method="post">
-        <input type="hidden" name="form_action" value="employee_details">
+      <!-- First / Last name -->
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <label for="first_name" class="form-label">First Name</label>
+    <input
+      type="text"
+      id="first_name"
+      name="first_name"
+      class="form-control"
+      value="{{ first_name_value }}"
+      required
+    >
+  </div>
 
-        <h2 class="h5 mb-3">Employee details</h2>
+  <div class="col-md-6">
+    <label for="last_name" class="form-label">Last Name</label>
+    <input
+      type="text"
+      id="last_name"
+      name="last_name"
+      class="form-control"
+      value="{{ last_name_value }}"
+      required
+    >
+  </div>
+</div>
 
-        <!-- First / Last name -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <label for="first_name" class="form-label">First name</label>
-            <input
-              type="text"
-              id="first_name"
-              name="first_name"
-              class="form-control"
-              value="{{ first_name_value }}"
-              required
-            >
-          </div>
+<!-- Email (username) + Date of Birth -->
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <label for="email" class="form-label">Email (username)</label>
+    <input
+      type="email"
+      id="email"
+      name="email"
+      class="form-control"
+      value=""
+      placeholder="(coming next)"
+      disabled
+    >
+  </div>
 
-          <div class="col-md-6">
-            <label for="last_name" class="form-label">Last name</label>
-            <input
-              type="text"
-              id="last_name"
-              name="last_name"
-              class="form-control"
-              value="{{ last_name_value }}"
-              required
-            >
-          </div>
-        </div>
+  <div class="col-md-6">
+    <label for="birthday" class="form-label">Date of Birth</label>
+    <input
+      type="date"
+      id="birthday"
+      name="birthday"
+      class="form-control"
+      value="{% if employee.birthday %}{{ employee.birthday.isoformat() }}{% endif %}"
+    >
+  </div>
+</div>
 
-        <!-- Birthday (date picker) -->
-        <div class="mb-3">
-          <label for="birthday" class="form-label">Birthday</label>
-          <input
-            type="date"
-            id="birthday"
-            name="birthday"
-            class="form-control"
-            value="{% if employee.birthday %}{{ employee.birthday.isoformat() }}{% endif %}"
-          >
-        </div>
-        
-        <!-- Start / End dates (inline, equal width) -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <label for="start_date" class="form-label">Start date</label>
-            <input
-              type="date"
-              id="start_date"
-              name="start_date"
-              class="form-control"
-              value="{% if employee.start_date %}{{ employee.start_date.isoformat() }}{% endif %}"
-            >
-          </div>
+<!-- Password + Confirm Password -->
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <label for="password" class="form-label">Password</label>
+    <input
+      type="password"
+      id="password"
+      name="password"
+      class="form-control"
+      value=""
+      placeholder="(coming next)"
+      disabled
+    >
+  </div>
 
-          <div class="col-md-6">
-            <label for="end_date" class="form-label">End date</label>
-            <input
-              type="date"
-              id="end_date"
-              name="end_date"
-              class="form-control"
-              value="{% if employee.end_date %}{{ employee.end_date.isoformat() }}{% endif %}"
-            >
-          </div>
-        </div>
+  <div class="col-md-6">
+    <label for="confirm_password" class="form-label">Confirm Password</label>
+    <input
+      type="password"
+      id="confirm_password"
+      name="confirm_password"
+      class="form-control"
+      value=""
+      placeholder="(coming next)"
+      disabled
+    >
+  </div>
+</div>
 
-        <!-- Department + Reporting manager (inline, equal width) -->
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <label for="department" class="form-label">Department</label>
-            <input
-              type="text"
-              id="department"
-              name="department"
-              class="form-control"
-              value="{{ department_value }}"
-            >
-          </div>
+<!-- Start / End dates -->
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <label for="start_date" class="form-label">Start Date</label>
+    <input
+      type="date"
+      id="start_date"
+      name="start_date"
+      class="form-control"
+      value="{% if employee.start_date %}{{ employee.start_date.isoformat() }}{% endif %}"
+    >
+  </div>
 
-          <div class="col-md-6">
-            <label for="reporting_manager_id" class="form-label">Reporting manager</label>
-            <select id="reporting_manager_id" name="reporting_manager_id" class="form-select rounded-pill">
-              <option value="">-- None --</option>
-              {% for m in manager_employees %}
-                <option value="{{ m.id }}" {% if employee.reporting_manager_id == m.id %}selected{% endif %}>
-                  {{ m.name }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
+  <div class="col-md-6">
+    <label for="end_date" class="form-label">End Date</label>
+    <input
+      type="date"
+      id="end_date"
+      name="end_date"
+      class="form-control"
+      value="{% if employee.end_date %}{{ employee.end_date.isoformat() }}{% endif %}"
+    >
+  </div>
+</div>
 
+<!-- Role + Reporting Manager -->
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <label for="role" class="form-label">Role</label>
+    <select id="role" name="role" class="form-select rounded-pill" disabled>
+      <option value="">(coming next)</option>
+      <option value="employee">Employee</option>
+      <option value="manager">Manager</option>
+      <option value="admin">Admin</option>
+    </select>
+  </div>
 
-        <!-- Active -->
-        <div class="form-check mb-3">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="active"
-            name="active"
-            {% if employee.active %}checked{% endif %}
-          >
-          <label class="form-check-label" for="active">
-            Active
-          </label>
-        </div>
+  <div class="col-md-6">
+    <label for="reporting_manager_id" class="form-label">Reporting Manager</label>
+    <select id="reporting_manager_id" name="reporting_manager_id" class="form-select rounded-pill">
+      <option value="">-- None --</option>
+      {% for m in manager_employees %}
+        <option value="{{ m.id }}" {% if employee.reporting_manager_id == m.id %}selected{% endif %}>
+          {{ m.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
 
-        <!-- SAVE button (requested location) -->
-        <button type="submit" class="btn btn-primary">
-          Save
-        </button>
-      </form>
-    </div>
+<!-- Department (full width) -->
+<div class="mb-3">
+  <label for="department" class="form-label">Department</label>
+  <input
+    type="text"
+    id="department"
+    name="department"
+    class="form-control"
+    value="{{ department_value }}"
+  >
+</div>
+
+<!-- Active -->
+<div class="form-check mb-3">
+  <input class="form-check-input" type="checkbox" id="active" name="active" {% if employee.active %}checked{% endif %}>
+  <label class="form-check-label" for="active">Active</label>
+</div>
+
+<!-- Save -->
+<div class="mt-3">
+  <button type="submit" class="btn btn-primary">Save</button>
+</div>
 
     <!-- RIGHT: Leave days form -->
     <div class="col-lg-6">
