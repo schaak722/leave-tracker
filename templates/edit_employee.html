@@ -250,7 +250,7 @@
                 {% for ent in employee.entitlements|sort(attribute="year", reverse=True) %}
                   <li class="list-group-item d-flex justify-content-between align-items-center">
                     <div>
-                      <strong>{{ ent.year }}</strong> — {{ ent.days }} days
+                      <strong>{{ ent.year }}</strong> - {{ ent.days }} days
                     </div>
 
                     <form method="post" class="mb-0">
