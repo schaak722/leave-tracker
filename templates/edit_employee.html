@@ -17,235 +17,265 @@
   {% endif %}
 
   <div class="row g-4">
-    <!-- LEFT: Employee details form -->
+
+    <!-- LEFT: Employee details -->
     <div class="col-lg-6">
-      <!-- First / Last name -->
-<div class="row g-3 mb-3">
-  <div class="col-md-6">
-    <label for="first_name" class="form-label">First Name</label>
-    <input
-      type="text"
-      id="first_name"
-      name="first_name"
-      class="form-control"
-      value="{{ first_name_value }}"
-      required
-    >
-  </div>
+      <form method="post">
+        <input type="hidden" name="form_action" value="employee_details">
 
-  <div class="col-md-6">
-    <label for="last_name" class="form-label">Last Name</label>
-    <input
-      type="text"
-      id="last_name"
-      name="last_name"
-      class="form-control"
-      value="{{ last_name_value }}"
-      required
-    >
-  </div>
-</div>
+        <h2 class="h5 mb-3">Employee details</h2>
 
-<!-- Email (username) + Date of Birth -->
-<div class="row g-3 mb-3">
-  <div class="col-md-6">
-    <label for="email" class="form-label">Email (username)</label>
-    <input
-      type="email"
-      id="email"
-      name="email"
-      class="form-control"
-      value=""
-      placeholder="(coming next)"
-      disabled
-    >
-  </div>
-
-  <div class="col-md-6">
-    <label for="birthday" class="form-label">Date of Birth</label>
-    <input
-      type="date"
-      id="birthday"
-      name="birthday"
-      class="form-control"
-      value="{% if employee.birthday %}{{ employee.birthday.isoformat() }}{% endif %}"
-    >
-  </div>
-</div>
-
-<!-- Password + Confirm Password -->
-<div class="row g-3 mb-3">
-  <div class="col-md-6">
-    <label for="password" class="form-label">Password</label>
-    <input
-      type="password"
-      id="password"
-      name="password"
-      class="form-control"
-      value=""
-      placeholder="(coming next)"
-      disabled
-    >
-  </div>
-
-  <div class="col-md-6">
-    <label for="confirm_password" class="form-label">Confirm Password</label>
-    <input
-      type="password"
-      id="confirm_password"
-      name="confirm_password"
-      class="form-control"
-      value=""
-      placeholder="(coming next)"
-      disabled
-    >
-  </div>
-</div>
-
-<!-- Start / End dates -->
-<div class="row g-3 mb-3">
-  <div class="col-md-6">
-    <label for="start_date" class="form-label">Start Date</label>
-    <input
-      type="date"
-      id="start_date"
-      name="start_date"
-      class="form-control"
-      value="{% if employee.start_date %}{{ employee.start_date.isoformat() }}{% endif %}"
-    >
-  </div>
-
-  <div class="col-md-6">
-    <label for="end_date" class="form-label">End Date</label>
-    <input
-      type="date"
-      id="end_date"
-      name="end_date"
-      class="form-control"
-      value="{% if employee.end_date %}{{ employee.end_date.isoformat() }}{% endif %}"
-    >
-  </div>
-</div>
-
-<!-- Role + Reporting Manager -->
-<div class="row g-3 mb-3">
-  <div class="col-md-6">
-    <label for="role" class="form-label">Role</label>
-    <select id="role" name="role" class="form-select rounded-pill" disabled>
-      <option value="">(coming next)</option>
-      <option value="employee">Employee</option>
-      <option value="manager">Manager</option>
-      <option value="admin">Admin</option>
-    </select>
-  </div>
-
-  <div class="col-md-6">
-    <label for="reporting_manager_id" class="form-label">Reporting Manager</label>
-    <select id="reporting_manager_id" name="reporting_manager_id" class="form-select rounded-pill">
-      <option value="">-- None --</option>
-      {% for m in manager_employees %}
-        <option value="{{ m.id }}" {% if employee.reporting_manager_id == m.id %}selected{% endif %}>
-          {{ m.name }}
-        </option>
-      {% endfor %}
-    </select>
-  </div>
-</div>
-
-<!-- Department (full width) -->
-<div class="mb-3">
-  <label for="department" class="form-label">Department</label>
-  <input
-    type="text"
-    id="department"
-    name="department"
-    class="form-control"
-    value="{{ department_value }}"
-  >
-</div>
-
-<!-- Active -->
-<div class="form-check mb-3">
-  <input class="form-check-input" type="checkbox" id="active" name="active" {% if employee.active %}checked{% endif %}>
-  <label class="form-check-label" for="active">Active</label>
-</div>
-
-<!-- Save -->
-<div class="mt-3">
-  <button type="submit" class="btn btn-primary">Save</button>
-</div>
-
-    <!-- RIGHT: Leave days form -->
-    <div class="col-lg-6">
-      <h2 class="h5 mb-3">Leave days</h2>
-      <p class="text-muted mb-3">
-        Add leave days for a specific year. If the year already exists, it will be updated.
-      </p>
-
-      <form method="post" class="mb-3">
-        <input type="hidden" name="form_action" value="add_entitlement">
-
-        <div class="row g-3 align-items-end">
-          <div class="col-4">
-            <label for="ent_year" class="form-label">Year</label>
+        <!-- First Name / Last Name -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="first_name" class="form-label">First Name</label>
             <input
-              type="number"
-              id="ent_year"
-              name="ent_year"
+              type="text"
+              id="first_name"
+              name="first_name"
               class="form-control"
-              value="{{ current_year }}"
+              value="{{ first_name_value }}"
+              required
             >
           </div>
 
-          <div class="col-4">
-            <label for="ent_days" class="form-label">Leave days</label>
+          <div class="col-md-6">
+            <label for="last_name" class="form-label">Last Name</label>
             <input
-              type="number"
-              step="0.5"
-              id="ent_days"
-              name="ent_days"
+              type="text"
+              id="last_name"
+              name="last_name"
               class="form-control"
-              value="{{ current_year_ent_days }}"
+              value="{{ last_name_value }}"
+              required
             >
-          </div>
-
-          <div class="col-4 text-end">
-            <button type="submit" class="btn btn-outline-primary">
-              Add
-            </button>
           </div>
         </div>
+
+        <!-- Email (username) / Date of Birth -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="email" class="form-label">Email (username)</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-control"
+              value=""
+              placeholder="(coming next)"
+              disabled
+            >
+          </div>
+
+          <div class="col-md-6">
+            <label for="birthday" class="form-label">Date of Birth</label>
+            <input
+              type="date"
+              id="birthday"
+              name="birthday"
+              class="form-control"
+              value="{% if employee.birthday %}{{ employee.birthday.isoformat() }}{% endif %}"
+            >
+          </div>
+        </div>
+
+        <!-- Password / Confirm Password -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="password" class="form-label">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="form-control"
+              value=""
+              placeholder="(coming next)"
+              disabled
+            >
+          </div>
+
+          <div class="col-md-6">
+            <label for="confirm_password" class="form-label">Confirm Password</label>
+            <input
+              type="password"
+              id="confirm_password"
+              name="confirm_password"
+              class="form-control"
+              value=""
+              placeholder="(coming next)"
+              disabled
+            >
+          </div>
+        </div>
+
+        <!-- Start Date / End Date -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input
+              type="date"
+              id="start_date"
+              name="start_date"
+              class="form-control"
+              value="{% if employee.start_date %}{{ employee.start_date.isoformat() }}{% endif %}"
+            >
+          </div>
+
+          <div class="col-md-6">
+            <label for="end_date" class="form-label">End Date</label>
+            <input
+              type="date"
+              id="end_date"
+              name="end_date"
+              class="form-control"
+              value="{% if employee.end_date %}{{ employee.end_date.isoformat() }}{% endif %}"
+            >
+          </div>
+        </div>
+
+        <!-- Role / Reporting Manager -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="role" class="form-label">Role</label>
+            <select id="role" name="role" class="form-select rounded-pill">
+              <option value="employee" {% if (employee.role or 'employee')|lower == 'employee' %}selected{% endif %}>Employee</option>
+              <option value="manager" {% if (employee.role or '')|lower == 'manager' %}selected{% endif %}>Manager</option>
+              <option value="admin" {% if (employee.role or '')|lower == 'admin' %}selected{% endif %}>Admin</option>
+            </select>
+            <div class="form-text">
+              Admins have full access but do not have leave days allocated.
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="reporting_manager_id" class="form-label">Reporting Manager</label>
+            <select id="reporting_manager_id" name="reporting_manager_id" class="form-select rounded-pill">
+              <option value="">-- None --</option>
+              {% for m in manager_employees|sort(attribute="name") %}
+                <option value="{{ m.id }}" {% if employee.reporting_manager_id == m.id %}selected{% endif %}>
+                  {{ m.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Department (full width) -->
+        <div class="mb-3">
+          <label for="department" class="form-label">Department</label>
+          <input
+            type="text"
+            id="department"
+            name="department"
+            class="form-control"
+            value="{{ department_value }}"
+          >
+        </div>
+
+        <!-- Active -->
+        <div class="form-check mb-3">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="active"
+            name="active"
+            {% if employee.active %}checked{% endif %}
+          >
+          <label class="form-check-label" for="active">
+            Active
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          Save
+        </button>
       </form>
+    </div>
 
-      <hr class="my-4">
+    <!-- RIGHT: Leave days -->
+    <div class="col-lg-6">
+      <h2 class="h5 mb-3">Leave days</h2>
 
-      <h3 class="h6 mb-2">All leave days</h3>
+      {% if (employee.role or 'employee')|lower != 'admin' %}
 
-      {% if employee.entitlements %}
-        <ul class="list-unstyled mb-0">
-          {% for ent in employee.entitlements|sort(attribute="year") %}
-            <li class="d-flex align-items-center justify-content-between mb-2">
-              <span>
-                <strong>{{ ent.year }}</strong>: {{ "%.1f"|format(ent.days) }} days
-              </span>
+        <p class="text-muted mb-3">
+          Add leave days for a specific year. If the year already exists, it will be updated.
+        </p>
 
-              <form
-                action="{{ url_for('delete_entitlement', employee_id=employee.id, year=ent.year) }}"
-                method="post"
-                class="ms-2"
-                onsubmit="return confirm('Remove entitlement (and any leave entries) for {{ ent.year }}?');"
+        <form method="post" class="mb-3">
+          <input type="hidden" name="form_action" value="add_entitlement">
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="entitlement_year" class="form-label">Year</label>
+              <input
+                type="number"
+                id="entitlement_year"
+                name="entitlement_year"
+                class="form-control"
+                value="{{ current_year }}"
+                min="2000"
+                max="2100"
+                required
               >
-                <button type="submit" class="btn btn-outline-danger btn-sm">
-                  Remove
-                </button>
-              </form>
-            </li>
-          {% endfor %}
-        </ul>
+            </div>
+
+            <div class="col-md-4">
+              <label for="entitlement_days" class="form-label">Leave days</label>
+              <input
+                type="number"
+                step="0.5"
+                id="entitlement_days"
+                name="entitlement_days"
+                class="form-control"
+                value="{{ current_year_ent_days }}"
+                required
+              >
+            </div>
+
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary w-100">
+                Add / Update
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <div class="card">
+          <div class="card-body">
+            <h3 class="h6 mb-3">Existing leave days</h3>
+
+            {% if employee.entitlements %}
+              <ul class="list-group">
+                {% for ent in employee.entitlements|sort(attribute="year", reverse=True) %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong>{{ ent.year }}</strong> — {{ ent.days }} days
+                    </div>
+
+                    <form method="post" class="mb-0">
+                      <input type="hidden" name="form_action" value="delete_entitlement">
+                      <input type="hidden" name="entitlement_year" value="{{ ent.year }}">
+                      <button type="submit" class="btn btn-outline-danger btn-sm">
+                        Remove
+                      </button>
+                    </form>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="text-muted mb-0">No leave days defined.</p>
+            {% endif %}
+          </div>
+        </div>
+
       {% else %}
-        <p class="text-muted mb-0">No leave days defined.</p>
+        <div class="alert alert-info">
+          Admin users do not have leave days allocated.
+        </div>
       {% endif %}
     </div>
+
   </div>
 </div>
 {% endblock %}
