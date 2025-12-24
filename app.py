@@ -1379,12 +1379,12 @@ def edit_employee(employee_id):
         # B) Add / update entitlement
         # -------------------------
         elif form_action == "add_entitlement":
-            # New rule: admins do not have leave days allocated (server-side enforcement)
+            # Admins do not have leave days allocated (server-side enforcement)
             if (emp.role or "").lower() == "admin":
                 flash("Admins do not have leave days allocated.", "warning")
                 return redirect(url_for("edit_employee", employee_id=emp.id))
 
-             ent_year_str = (request.form.get("entitlement_year") or "").strip()
+            ent_year_str = (request.form.get("entitlement_year") or "").strip()
             ent_days_str = (request.form.get("entitlement_days") or "").strip()
             is_edit_mode_post = (request.form.get("is_edit_mode") or "").strip() == "1"
 
@@ -1415,8 +1415,11 @@ def edit_employee(employee_id):
                     if ent:
                         error = "That year already exists. Use the edit icon to change it."
                     else:
-                        db.session.add(Entitlement(employee_id=emp.id, year=ent_year, days=ent_days))
+                        db.session.add(
+                            Entitlement(employee_id=emp.id, year=ent_year, days=ent_days)
+                        )
 
+            if not error:
                 db.session.commit()
                 flash("Leave days saved.", "success")
                 return redirect(url_for("edit_employee", employee_id=emp.id))
