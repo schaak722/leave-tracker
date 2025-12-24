@@ -1226,11 +1226,155 @@ def manage_employees():
             .all()
         )
 
+    # Managers list for Create Employee modal
+    manager_employees = (
+        Employee.query
+        .join(User, User.employee_id == Employee.id)
+        .filter(User.active.is_(True), User.role == "manager")
+        .order_by(Employee.name)
+        .all()
+    )
+
     return render_template(
         "manage_employees.html",
         employees=employees,
         show_archived=show_archived,
+        manager_employees=manager_employees,
     )
+
+@app.route("/admin/employees/create", methods=["POST"])
+def create_employee_modal():
+    if not g.is_admin:
+        return redirect(url_for("login"))
+
+    # Required (per your rule)
+    first_name = (request.form.get("first_name") or "").strip()
+    last_name = (request.form.get("last_name") or "").strip()
+    email = (request.form.get("email") or "").strip()
+    password = request.form.get("password") or ""
+    confirm_password = request.form.get("confirm_password") or ""
+
+    # Optional employee fields
+    birthday_str = (request.form.get("birthday") or "").strip()
+    start_date_str = (request.form.get("start_date") or "").strip()
+    end_date_str = (request.form.get("end_date") or "").strip()
+    department = (request.form.get("department") or "").strip()
+    reporting_manager_id_str = (request.form.get("reporting_manager_id") or "").strip()
+
+    role = (request.form.get("role") or "employee").strip().lower()
+    if role not in ("employee", "manager", "admin"):
+        flash("Invalid role.", "danger")
+        return redirect(url_for("manage_employees"))
+
+    active = True if request.form.get("active") == "on" else False
+
+    # Leave days (required unless admin)
+    ent_year_str = (request.form.get("entitlement_year") or "").strip()
+    ent_days_str = (request.form.get("entitlement_days") or "").strip()
+
+    # Validation
+    if not first_name or not last_name:
+        flash("First name and last name are required.", "danger")
+        return redirect(url_for("manage_employees"))
+
+    if not email:
+        flash("Email (username) is required.", "danger")
+        return redirect(url_for("manage_employees"))
+
+    if not password:
+        flash("Password is required.", "danger")
+        return redirect(url_for("manage_employees"))
+
+    if password != confirm_password:
+        flash("Passwords do not match.", "danger")
+        return redirect(url_for("manage_employees"))
+
+    if User.query.filter_by(username=email).first():
+        flash("That email/username is already in use.", "danger")
+        return redirect(url_for("manage_employees"))
+
+    full_name = f"{first_name} {last_name}".strip()
+    existing_emp = Employee.query.filter(Employee.name == full_name).first()
+    if existing_emp:
+        flash("An employee with that name already exists.", "danger")
+        return redirect(url_for("manage_employees"))
+
+    # Parse dates
+    birthday = parse_birthday(birthday_str) if birthday_str else None
+    if birthday_str and not birthday:
+        flash("Invalid birthday date.", "danger")
+        return redirect(url_for("manage_employees"))
+
+    sd = parse_date_input(start_date_str) if start_date_str else None
+    if start_date_str and not sd:
+        flash("Invalid start date.", "danger")
+        return redirect(url_for("manage_employees"))
+
+    ed = parse_date_input(end_date_str) if end_date_str else None
+    if end_date_str and not ed:
+        flash("Invalid end date.", "danger")
+        return redirect(url_for("manage_employees"))
+
+    if sd and ed and ed < sd:
+        flash("End date cannot be earlier than start date.", "danger")
+        return redirect(url_for("manage_employees"))
+
+    # Parse reporting manager (optional)
+    reporting_manager_id = None
+    if reporting_manager_id_str:
+        try:
+            reporting_manager_id = int(reporting_manager_id_str)
+        except ValueError:
+            reporting_manager_id = None
+
+    # Leave days validation (non-admin only)
+    entitlement_year = None
+    entitlement_days = None
+    if role != "admin":
+        if not ent_year_str or not ent_days_str:
+            flash("Leave days and year are required for Employees and Managers.", "danger")
+            return redirect(url_for("manage_employees"))
+        try:
+            entitlement_year = int(ent_year_str)
+            entitlement_days = float(ent_days_str)
+        except ValueError:
+            flash("Invalid leave days year or value.", "danger")
+            return redirect(url_for("manage_employees"))
+
+    # Create Employee
+    emp = Employee(
+        name=full_name,
+        first_name=first_name,
+        last_name=last_name,
+        department=department if department else None,
+        role=role,
+        active=active,
+        birthday=birthday,
+        start_date=sd,
+        end_date=ed,
+        reporting_manager_id=reporting_manager_id,
+    )
+    db.session.add(emp)
+    db.session.flush()  # ensures emp.id exists for user/entitlement
+
+    # Create User (mandatory)
+    user = User(
+        username=email,
+        role=role,
+        active=active,
+        employee_id=emp.id,
+    )
+    user.set_password(password)
+    db.session.add(user)
+
+    # Create Entitlement (non-admin only)
+    if role != "admin":
+        ent = Entitlement(employee_id=emp.id, year=entitlement_year, days=entitlement_days)
+        db.session.add(ent)
+
+    db.session.commit()
+    flash("Employee created.", "success")
+    return redirect(url_for("manage_employees"))
 
 @app.route("/admin/employee/<int:employee_id>/edit", methods=["GET", "POST"])
 def edit_employee(employee_id):
