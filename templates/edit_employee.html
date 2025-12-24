@@ -61,9 +61,8 @@
               id="email"
               name="email"
               class="form-control"
-              value=""
-              placeholder="(coming next)"
-              disabled
+              value="{{ username_value }}"
+              placeholder="name@company.com"
             >
           </div>
 
@@ -83,15 +82,14 @@
         <div class="row g-3 mb-3">
           <div class="col-md-6">
             <label for="password" class="form-label">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              class="form-control"
-              value=""
-              placeholder="(coming next)"
-              disabled
-            >
+           <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-control"
+            value=""
+            autocomplete="new-password"
+          >
           </div>
 
           <div class="col-md-6">
@@ -102,8 +100,7 @@
               name="confirm_password"
               class="form-control"
               value=""
-              placeholder="(coming next)"
-              disabled
+              autocomplete="new-password"
             >
           </div>
         </div>
