@@ -1240,14 +1240,38 @@ def edit_employee(employee_id):
     emp = Employee.query.get_or_404(employee_id)
     error = None
 
-    # Default to current year for leave days editor
+    # Leave days editor: default to current year, or edit a specific year via ?edit_year=YYYY
     current_year = datetime.now().year
-    ent_for_current_year = (
+
+    edit_year = request.args.get("edit_year", "").strip()
+    is_edit_mode = False
+    entitlement_year_value = current_year
+    entitlement_days_value = ""
+
+    if edit_year:
+        try:
+            entitlement_year_value = int(edit_year)
+            is_edit_mode = True
+        except ValueError:
+            entitlement_year_value = current_year
+            is_edit_mode = False
+
+    ent_for_year = (
         Entitlement.query
-        .filter_by(employee_id=emp.id, year=current_year)
+        .filter_by(employee_id=emp.id, year=entitlement_year_value)
         .first()
     )
-    current_year_ent_days = ent_for_current_year.days if ent_for_current_year else ""
+    entitlement_days_value = ent_for_year.days if ent_for_year else ""
+    # If someone tries to edit a year that doesn't exist, fall back to add mode
+    if is_edit_mode and not ent_for_year:
+        is_edit_mode = False
+        entitlement_year_value = current_year
+        ent_for_year = (
+            Entitlement.query
+            .filter_by(employee_id=emp.id, year=entitlement_year_value)
+            .first()
+        )
+        entitlement_days_value = ent_for_year.days if ent_for_year else ""
 
     # Managers list (keep your existing behaviour for now)
     manager_employees = (
@@ -1360,8 +1384,9 @@ def edit_employee(employee_id):
                 flash("Admins do not have leave days allocated.", "warning")
                 return redirect(url_for("edit_employee", employee_id=emp.id))
 
-            ent_year_str = (request.form.get("entitlement_year") or "").strip()
+             ent_year_str = (request.form.get("entitlement_year") or "").strip()
             ent_days_str = (request.form.get("entitlement_days") or "").strip()
+            is_edit_mode_post = (request.form.get("is_edit_mode") or "").strip() == "1"
 
             if not ent_year_str or not ent_days_str:
                 error = "Year and leave days are required."
@@ -1378,11 +1403,19 @@ def edit_employee(employee_id):
                     .filter_by(employee_id=emp.id, year=ent_year)
                     .first()
                 )
-                if ent:
-                    ent.days = ent_days
+
+                if is_edit_mode_post:
+                    # Edit mode: must already exist
+                    if not ent:
+                        error = "That year does not exist. Use Add to create it."
+                    else:
+                        ent.days = ent_days
                 else:
-                    ent = Entitlement(employee_id=emp.id, year=ent_year, days=ent_days)
-                    db.session.add(ent)
+                    # Add mode: must NOT already exist
+                    if ent:
+                        error = "That year already exists. Use the edit icon to change it."
+                    else:
+                        db.session.add(Entitlement(employee_id=emp.id, year=ent_year, days=ent_days))
 
                 db.session.commit()
                 flash("Leave days saved.", "success")
@@ -1412,8 +1445,9 @@ def edit_employee(employee_id):
         "edit_employee.html",
         employee=emp,
         error=error,
-        current_year=current_year,
-        current_year_ent_days=current_year_ent_days,
+        entitlement_year_value=entitlement_year_value,
+        entitlement_days_value=entitlement_days_value,
+        is_edit_mode=is_edit_mode,
         manager_employees=manager_employees,
         first_name_value=first_name_value,
         last_name_value=last_name_value,
