@@ -198,10 +198,6 @@
 
       {% if (employee.role or 'employee')|lower != 'admin' %}
 
-        <p class="text-muted mb-3">
-          Add leave days for a specific year. If the year already exists, it will be updated.
-        </p>
-
         <form method="post" class="mb-3">
         <input type="hidden" name="form_action" value="add_entitlement">
         <input type="hidden" name="is_edit_mode" value="{% if is_edit_mode %}1{% else %}0{% endif %}">
@@ -268,27 +264,42 @@
                     <div class="d-flex gap-2">
 
                     <!-- Edit (pencil) -->
-                    <a
-                      href="{{ url_for('edit_employee', employee_id=employee.id, edit_year=ent.year) }}"
+                    <button
+                      type="button"
                       class="btn btn-outline-secondary btn-sm"
                       title="Edit"
                       aria-label="Edit"
+                      data-bs-toggle="modal"
+                      data-bs-target="#editEntitlementModal"
+                      data-year="{{ ent.year }}"
+                      data-days="{{ ent.days }}"
                     >
+                      <!-- pencil icon -->
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-9.5 9.5a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l9.5-9.5zM11.207 2L3 10.207V11h.793L12 2.793 11.207 2z"/>
                         <path d="M2.5 13.5l3.5-1.4L3.9 10 2.5 13.5z"/>
                       </svg>
-                    </a>
-                  
+                    </button>
+                      
                     <!-- Delete (bin) -->
-                    <form method="post" action="{{ url_for('delete_entitlement', employee_id=employee.id, year=ent.year) }}" class="mb-0">
-                      <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete" aria-label="Delete">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                          <path d="M5.5 5.5A.5.5 0 0 1 6 6v7a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0A.5.5 0 0 1 8.5 6v7a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v7a.5.5 0 0 0 1 0V6z"/>
-                          <path d="M14.5 3a1 1 0 0 1-1 1H13l-1 11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4h-.5a1 1 0 0 1 0-2H5.5l1-1h3l1 1h3a1 1 0 0 1 1 1zM4.118 4 5 14.5A1 1 0 0 0 6 15h4a1 1 0 0 0 1-.5L11.882 4H4.118z"/>
-                        </svg>
-                      </button>
-                    </form>
+                    <form method="post" action="{{ url_for('delete_entitlement', employee_id=employee.id, year=ent.year) }}" class="mb-0 entitlement-delete-form">
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger btn-sm"
+                      title="Delete"
+                      aria-label="Delete"
+                      data-bs-toggle="modal"
+                      data-bs-target="#confirmDeleteEntitlementModal"
+                      data-delete-action="{{ url_for('delete_entitlement', employee_id=employee.id, year=ent.year) }}"
+                    >
+                    <!-- bin icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M5.5 5.5A.5.5 0 0 1 6 6v7a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0A.5.5 0 0 1 8.5 6v7a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v7a.5.5 0 0 0 1 0V6z"/>
+                      <path d="M14.5 3a1 1 0 0 1-1 1H13l-1 11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L3 4h-.5a1 1 0 0 1 0-2H5.5l1-1h3l1 1h3a1 1 0 0 1 1 1zM4.118 4 5 14.5A1 1 0 0 0 6 15h4a1 1 0 0 0 1-.5L11.882 4H4.118z"/>
+                    </svg>
+                  </button>
+                </form>
+
                   </div>
                   </li>
                 {% endfor %}
@@ -307,4 +318,104 @@
     </div>
   </div>
 </div>
+        <!-- Edit Entitlement Modal -->
+        <div class="modal fade" id="editEntitlementModal" tabindex="-1" aria-labelledby="editEntitlementModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="editEntitlementModalLabel">Edit leave days</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+        
+              <form method="post" id="editEntitlementForm">
+                <input type="hidden" name="form_action" value="add_entitlement">
+                <input type="hidden" name="is_edit_mode" value="1">
+        
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="modal_entitlement_year" class="form-label">Year</label>
+                    <input type="number" id="modal_entitlement_year" name="entitlement_year" class="form-control" readonly>
+                  </div>
+        
+                  <div class="mb-3">
+                    <label for="modal_entitlement_days" class="form-label">Leave days</label>
+                    <input type="number" step="0.5" id="modal_entitlement_days" name="entitlement_days" class="form-control" required>
+                  </div>
+                </div>
+        
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <script>
+          document.addEventListener("DOMContentLoaded", function () {
+            // -----------------------------
+            // A) Edit entitlement modal
+            // -----------------------------
+            const editModal = document.getElementById("editEntitlementModal");
+            if (editModal) {
+              editModal.addEventListener("show.bs.modal", function (event) {
+                const button = event.relatedTarget;
+                if (!button) return;
+        
+                const year = button.getAttribute("data-year");
+                const days = button.getAttribute("data-days");
+        
+                const yearInput = document.getElementById("modal_entitlement_year");
+                const daysInput = document.getElementById("modal_entitlement_days");
+        
+                if (yearInput) yearInput.value = year || "";
+                if (daysInput) daysInput.value = days || "";
+              });
+            }
+        
+            // -----------------------------
+            // B) Confirm delete modal
+            // -----------------------------
+            const deleteModal = document.getElementById("confirmDeleteEntitlementModal");
+            const confirmDeleteForm = document.getElementById("confirmDeleteEntitlementForm");
+        
+            if (deleteModal && confirmDeleteForm) {
+              deleteModal.addEventListener("show.bs.modal", function (event) {
+                const button = event.relatedTarget;
+                if (!button) return;
+        
+                const action = button.getAttribute("data-delete-action");
+                if (action) {
+                  confirmDeleteForm.setAttribute("action", action);
+                }
+              });
+            }
+          });
+        </script>
+          
+        <!-- Confirm Delete Modal -->
+          <div class="modal fade" id="confirmDeleteEntitlementModal" tabindex="-1" aria-labelledby="confirmDeleteEntitlementModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="confirmDeleteEntitlementModalLabel">Confirm deletion</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+          
+                <div class="modal-body">
+                  Are you sure you want to delete these leave days? This will also delete any leave entries for that year.
+                </div>
+          
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          
+                  <form method="post" id="confirmDeleteEntitlementForm">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
 {% endblock %}
