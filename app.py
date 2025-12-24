@@ -1240,6 +1240,10 @@ def edit_employee(employee_id):
     emp = Employee.query.get_or_404(employee_id)
     error = None
 
+        # Linked login (for now we keep the User table, but manage it here)
+    linked_user = User.query.filter_by(employee_id=emp.id).first()
+    username_value = linked_user.username if linked_user else ""
+
     # Leave days editor: default to current year, or edit a specific year via ?edit_year=YYYY
     current_year = datetime.now().year
 
@@ -1296,6 +1300,9 @@ def edit_employee(employee_id):
             first_name = (request.form.get("first_name") or "").strip()
             last_name = (request.form.get("last_name") or "").strip()
             department = (request.form.get("department") or "").strip()
+            email = (request.form.get("email") or "").strip()
+            password = request.form.get("password") or ""
+            confirm_password = request.form.get("confirm_password") or ""
 
             # New: role on Employee
             role = (request.form.get("role") or "employee").strip().lower()
@@ -1370,6 +1377,49 @@ def edit_employee(employee_id):
                 else:
                     emp.reporting_manager_id = None
 
+                # --- Login handling (moved from Manage Users) ---
+                # If an email is provided, we create/update the linked User record.
+                # If no email is provided, we leave login as-is (or no login).
+                if email:
+                    existing_username_user = User.query.filter(User.username == email).first()
+                    if existing_username_user and (not linked_user or existing_username_user.id != linked_user.id):
+                        error = "That email/username is already in use by another user."
+
+                    if not error:
+                        if linked_user is None:
+                            # Creating a new login requires a password
+                            if not password:
+                                error = "Password is required when creating a new login."
+                            elif password != confirm_password:
+                                error = "Passwords do not match."
+                            else:
+                                linked_user = User(
+                                    username=email,
+                                    role=(emp.role or "employee"),
+                                    active=emp.active,
+                                    employee_id=emp.id,
+                                )
+                                linked_user.set_password(password)
+                                db.session.add(linked_user)
+                        else:
+                            # Update existing login
+                            linked_user.username = email
+                            linked_user.role = (emp.role or "employee")
+                            linked_user.active = emp.active
+
+                            # Only change password if provided
+                            if password or confirm_password:
+                                if password != confirm_password:
+                                    error = "Passwords do not match."
+                                elif not password:
+                                    error = "Password cannot be empty."
+                                else:
+                                    linked_user.set_password(password)
+                else:
+                    # No email submitted: keep existing linked_user as-is for now
+                    pass
+
+                
                 if not error:
                     db.session.commit()
                     flash("Employee details saved.", "success")
@@ -1455,6 +1505,7 @@ def edit_employee(employee_id):
         first_name_value=first_name_value,
         last_name_value=last_name_value,
         department_value=department_value,
+        username_value=username_value,
     )
 
 @app.route("/admin/employee/<int:employee_id>/entitlement/<int:year>/delete", methods=["POST"])
