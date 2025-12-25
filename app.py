@@ -181,7 +181,7 @@ class LeaveEntry(db.Model):
         db.Integer, db.ForeignKey("employee.id"), nullable=False
     )
     date = db.Column(db.Date, nullable=False)
-    code = db.Column(db.String(1), nullable=False)   # "F" or "H"
+    code = db.Column(db.String(2), nullable=False)   # "F", "H", "HM", "HA"
     value = db.Column(db.Float, nullable=False)      # 1.0 or 0.5
 
     employee = db.relationship("Employee", backref="leave_entries")
@@ -1016,7 +1016,7 @@ def decide_leave_request(request_id):
 
 @app.route("/update_cell", methods=["POST"])
 def update_cell():
-    # Only admins or managers can edit calendar cells (F/H)
+    # Only admins or managers can edit calendar cells (F/HM/HA)
     if not (g.is_admin or g.is_manager):
         return jsonify({"success": False, "error": "Not authorised"}), 403
 
@@ -1028,7 +1028,7 @@ def update_cell():
     if not employee_id or not date_str:
         return jsonify({"success": False, "error": "Missing data"}), 400
 
-    if code not in ("F", "H", ""):
+    if code not in ("", "F", "HM", "HA"):
         return jsonify({"success": False, "error": "Invalid code"}), 400
 
     try:
@@ -1054,7 +1054,12 @@ def update_cell():
         return jsonify({"success": True})
 
     # Determine value
-    value = 1.0 if code == "F" else 0.5
+    if code == "F":
+        value = 1.0
+    elif code in ("HM", "HA"):
+        value = 0.5
+    else:
+        value = 0.0  # not used when code == "" because we delete the entry
 
     if not entry:
         entry = LeaveEntry(
