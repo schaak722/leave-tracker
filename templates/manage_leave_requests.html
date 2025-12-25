@@ -89,27 +89,26 @@
                   <td class="small text-muted">
                     {{ r.created_at.strftime("%d %b %Y") if r.created_at else "" }}
                   </td>
-                  <td>
+                  <td class="small text-muted">
                     {{ r.decision_at.strftime("%d %b %Y") if r.decision_at else "" }}
-                  </td>  
+                  </td>
                   <td>
-          {% if r.status == "pending" %}
-            <form method="post"
-                  action="{{ url_for('decide_leave_request', request_id=r.id) }}"
-                  class="d-flex flex-row gap-2">
-              <input type="hidden" name="manager_comment" value="">
-              <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">
-                Approve
-              </button>
-              <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">
-                Reject
-              </button>
-            </form>
-          {% endif %}
-            <span class="text-muted small">No actions available</span>
-          {% endif %}
-        </td>
-
+                    {% if r.status == "pending" %}
+                      <form method="post"
+                            action="{{ url_for('decide_leave_request', request_id=r.id) }}"
+                            class="d-flex flex-row gap-2">
+                        <input type="hidden" name="manager_comment" value="">
+                        <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">
+                          Approve
+                        </button>
+                        <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">
+                          Reject
+                        </button>
+                      </form>
+                    {% else %}
+                      <span class="text-muted small">No actions available</span>
+                    {% endif %}
+                  </td>
                 </tr>
               {% endfor %}
             </tbody>
