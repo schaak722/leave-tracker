@@ -154,11 +154,11 @@
       <span>Full-day leave</span>
     </div>
     <div class="legend-item">
-      <span class="legend-badge legend-badge-h">HM</span>
+      <span class="legend-badge legend-badge-h">H1</span>
       <span>Half-day (Morning)</span>
     </div>
     <div class="legend-item">
-      <span class="legend-badge legend-badge-h">HA</span>
+      <span class="legend-badge legend-badge-h">H2</span>
       <span>Half-day (Afternoon)</span>
     </div>
   </div>
@@ -256,7 +256,7 @@ document.addEventListener("DOMContentLoaded", function() {
   
   function codeToValue(code) {
     if (code === "F") return 1.0;
-    if (code === "H" || code === "HM" || code === "HA") return 0.5;
+    if (code === "H" || code === "H1" || code === "H2") return 0.5;
     return 0.0;
   }
 
@@ -297,14 +297,14 @@ document.addEventListener("DOMContentLoaded", function() {
     if (oldCode === "") {
       newCode = "F";
     } else if (oldCode === "F") {
-      newCode = "HM";
-    } else if (oldCode === "HM") {
-      newCode = "HA";
-    } else if (oldCode === "HA") {
+      newCode = "H1";
+    } else if (oldCode === "H1") {
+      newCode = "H2";
+    } else if (oldCode === "H2") {
       newCode = "";
     } else if (oldCode === "H") {
       // Backwards compatibility for any old data still using "H"
-      newCode = "HM";
+      newCode = "H1";
     }
 
 
