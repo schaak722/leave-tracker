@@ -139,9 +139,6 @@
               <option value="manager" {% if (employee.role or '')|lower == 'manager' %}selected{% endif %}>Manager</option>
               <option value="admin" {% if (employee.role or '')|lower == 'admin' %}selected{% endif %}>Admin</option>
             </select>
-            <div class="form-text">
-              Admins have full access but do not have leave days allocated.
-            </div>
           </div>
 
           <div class="col-md-6">
