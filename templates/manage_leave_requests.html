@@ -37,39 +37,44 @@
           <table class="table table-sm align-middle mb-0">
             <thead>
               <tr>
-                <th>Employee</th>
-                <th>Dates</th>
-                <th>Type</th>
+                <th class="text-nowrap">Employee</th>
+                <th class="text-nowrap">Dates</th>
+                <th class="text-nowrap">Type</th>
                 <th>Employee note</th>
-                <th>Status</th>
+                <th class="text-nowrap">Status</th>
                 <th>Manager comment</th>
-                <th>Requested on</th>
-                <th style="width: 220px;">Actions</th>
+                <th class="text-nowrap">Requested on</th>
+                <th class="text-nowrap">Responded on</th>
+                <th class="text-nowrap" style="width: 190px;">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for r in requests %}
                 <tr>
-                  <td>{{ r.employee.name }}</td>
-                  <td>
+                  <td class="small text-nowrap">{{ r.employee.name }}</td>
+
+                  <td class="small text-nowrap">
                     {{ r.start_date.strftime("%d %b %Y") }}
                     {% if r.end_date != r.start_date %}
                       &ndash; {{ r.end_date.strftime("%d %b %Y") }}
                     {% endif %}
                   </td>
-                  <td>
+
+                  <td class="small text-nowrap">
                     {% if r.code == "F" %}
-                      Full-day
-                    {% elif r.code == "H" %}
-                      Half-day
+                      F
+                    {% elif r.code in ["H", "H1", "H2"] %}
+                      {{ r.code }}
                     {% else %}
                       {{ r.code }}
                     {% endif %}
                   </td>
+
                   <td class="small">
                     {{ r.employee_comment or "" }}
                   </td>
-                  <td>
+
+                  <td class="text-nowrap">
                     {% if r.status == "pending" %}
                       <span class="badge bg-warning text-dark">Pending</span>
                     {% elif r.status == "approved" %}
@@ -82,37 +87,36 @@
                       <span class="badge bg-light text-dark">{{ r.status }}</span>
                     {% endif %}
                   </td>
+
                   <td class="small">
                     {{ r.manager_comment or "" }}
                   </td>
-                  <td class="small text-muted">
+
+                  <td class="small text-muted text-nowrap">
                     {{ r.created_at.strftime("%d %b %Y") if r.created_at else "" }}
                   </td>
-                  <td>
-  {% if r.status == "pending" %}
-    <form method="post"
-          action="{{ url_for('decide_leave_request', request_id=r.id) }}"
-          class="d-flex flex-column flex-sm-row gap-1">
-      <input type="hidden" name="action" value="approve">
-      <input type="hidden" name="manager_comment" value="">
-      <button type="submit" class="btn btn-success btn-sm">
-        Approve
-      </button>
-    </form>
-    <form method="post"
-          action="{{ url_for('decide_leave_request', request_id=r.id) }}"
-          class="d-flex flex-column flex-sm-row gap-1 mt-1">
-      <input type="hidden" name="action" value="reject">
-      <input type="hidden" name="manager_comment" value="">
-      <button type="submit" class="btn btn-danger btn-sm">
-        Reject
-      </button>
-    </form>
-  {% else %}
-    <span class="text-muted small">No actions available</span>
-  {% endif %}
-</td>
 
+                  <td class="small text-muted text-nowrap">
+                    {{ r.decision_at.strftime("%d %b %Y") if r.decision_at else "" }}
+                  </td>
+
+                  <td class="text-nowrap">
+                    {% if r.status == "pending" %}
+                      <form method="post"
+                            action="{{ url_for('decide_leave_request', request_id=r.id) }}"
+                            class="d-flex flex-row gap-2">
+                        <input type="hidden" name="manager_comment" value="">
+                        <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">
+                          Approve
+                        </button>
+                        <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">
+                          Reject
+                        </button>
+                      </form>
+                    {% else %}
+                      <span class="text-muted small">No actions available</span>
+                    {% endif %}
+                  </td>
                 </tr>
               {% endfor %}
             </tbody>
