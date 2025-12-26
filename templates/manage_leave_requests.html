@@ -37,40 +37,44 @@
           <table class="table table-sm align-middle mb-0">
             <thead>
               <tr>
-                <th>Employee</th>
-                <th>Dates</th>
-                <th>Type</th>
+                <th class="text-nowrap">Employee</th>
+                <th class="text-nowrap">Dates</th>
+                <th class="text-nowrap">Type</th>
                 <th>Employee note</th>
-                <th>Status</th>
+                <th class="text-nowrap">Status</th>
                 <th>Manager comment</th>
-                <th>Requested on</th>
-                <th>Responded on</th>
-                <th style="width: 220px;">Actions</th>
+                <th class="text-nowrap">Requested on</th>
+                <th class="text-nowrap">Responded on</th>
+                <th class="text-nowrap" style="width: 190px;">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for r in requests %}
                 <tr>
-                  <td>{{ r.employee.name }}</td>
-                  <td>
+                  <td class="small text-nowrap">{{ r.employee.name }}</td>
+
+                  <td class="small text-nowrap">
                     {{ r.start_date.strftime("%d %b %Y") }}
                     {% if r.end_date != r.start_date %}
                       &ndash; {{ r.end_date.strftime("%d %b %Y") }}
                     {% endif %}
                   </td>
-                  <td>
+
+                  <td class="small text-nowrap">
                     {% if r.code == "F" %}
-                      Full-day
-                    {% elif r.code == "H" %}
-                      Half-day
+                      F
+                    {% elif r.code in ["H", "H1", "H2"] %}
+                      {{ r.code }}
                     {% else %}
                       {{ r.code }}
                     {% endif %}
                   </td>
+
                   <td class="small">
                     {{ r.employee_comment or "" }}
                   </td>
-                  <td>
+
+                  <td class="text-nowrap">
                     {% if r.status == "pending" %}
                       <span class="badge bg-warning text-dark">Pending</span>
                     {% elif r.status == "approved" %}
@@ -83,16 +87,20 @@
                       <span class="badge bg-light text-dark">{{ r.status }}</span>
                     {% endif %}
                   </td>
+
                   <td class="small">
                     {{ r.manager_comment or "" }}
                   </td>
-                  <td class="small text-muted">
+
+                  <td class="small text-muted text-nowrap">
                     {{ r.created_at.strftime("%d %b %Y") if r.created_at else "" }}
                   </td>
-                  <td class="small text-muted">
+
+                  <td class="small text-muted text-nowrap">
                     {{ r.decision_at.strftime("%d %b %Y") if r.decision_at else "" }}
                   </td>
-                  <td>
+
+                  <td class="text-nowrap">
                     {% if r.status == "pending" %}
                       <form method="post"
                             action="{{ url_for('decide_leave_request', request_id=r.id) }}"
